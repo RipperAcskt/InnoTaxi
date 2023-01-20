@@ -17,11 +17,6 @@ func main() {
 	}
 	defer db.Close()
 
-	err = db.Migrate.Down()
-	if err != migrate.ErrNoChange && err != nil {
-		log.Fatalf("migrate down failed: %v", err)
-	}
-
 	err = db.Migrate.Up()
 	if err != migrate.ErrNoChange && err != nil {
 		log.Fatalf("migrate up failed: %v", err)
