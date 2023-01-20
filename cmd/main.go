@@ -15,6 +15,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("postgres new failed: %v", err)
 	}
+	defer db.Close()
 
 	err = db.Migrate.Down()
 	if err != migrate.ErrNoChange && err != nil {
