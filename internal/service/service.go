@@ -15,6 +15,6 @@ type Service struct {
 
 func New(postgres *postgres.Postgres) *Service {
 	return &Service{
-		SingUp: NewAuthSevcie(postgres),
+		SingUp: NewAuthSevice(postgres),
 	}
 }

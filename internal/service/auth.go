@@ -17,14 +17,13 @@ type AuthService struct {
 	postgres *postgres.Postgres
 }
 
-func NewAuthSevcie(postgres *postgres.Postgres) *AuthService {
+func NewAuthSevice(postgres *postgres.Postgres) *AuthService {
 	return &AuthService{postgres: postgres}
 }
 
 func (s *AuthService) CreateUser(user model.UserSingUp) error {
 	var err error
 	user.Password, err = generateHash(user.Password)
-	fmt.Println(user.Password)
 	if err != nil {
 		return fmt.Errorf("generate hash failed: %v", err)
 	}
