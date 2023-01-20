@@ -17,7 +17,7 @@ func (h *Handler) InitRouters() *gin.Engine {
 	router := gin.New()
 
 	auth := router.Group("/users")
-	auth.POST("singUp", h.singUp)
+	auth.POST("sing-up", h.singUp)
 
 	return router
 }
