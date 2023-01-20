@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/RipperAcskt/innotaxi/internal/model"
+	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
 func (h *Handler) singUp(c *gin.Context) {
@@ -22,6 +23,13 @@ func (h *Handler) singUp(c *gin.Context) {
 
 	err := h.s.CreateUser(user)
 	if err != nil {
+		if err == service.ErrUserAlreadyExists {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Sprint(service.ErrUserAlreadyExists),
+			})
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status": "internal server error",
 			"error":  fmt.Sprint(err),

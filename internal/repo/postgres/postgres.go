@@ -12,6 +12,10 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+var (
+	ErrUserAlreadyExists error = fmt.Errorf("user already exists")
+)
+
 type Postgres struct {
 	db      *sql.DB
 	Migrate *migrate.Migrate
@@ -45,7 +49,18 @@ func (p *Postgres) Close() error {
 }
 
 func (p *Postgres) CreateUser(user model.UserSingUp) error {
-	_, err := p.db.Exec("INSERT INTO users (name, phoneNumber, email, password, raiting) VALUES($1, $2, $3, $4, 4.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
+	rows, err := p.db.Query("SELECT * FROM users")
+	if err != nil {
+		return fmt.Errorf("query failed: %v", err)
+	}
+
+	defer rows.Close()
+
+	if rows.Next() {
+		return ErrUserAlreadyExists
+	}
+
+	_, err = p.db.Exec("INSERT INTO users (name, phoneNumber, email, password, raiting) VALUES($1, $2, $3, $4, 4.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
 	if err != nil {
 		return fmt.Errorf("exec failed: %v", err)
 	}

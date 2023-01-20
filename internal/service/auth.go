@@ -8,7 +8,10 @@ import (
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 )
 
-var salt = "124jkhsdaf3425"
+var (
+	salt                       = "124jkhsdaf3425"
+	ErrUserAlreadyExists error = fmt.Errorf("user already exists")
+)
 
 type AuthService struct {
 	postgres *postgres.Postgres
@@ -25,7 +28,13 @@ func (s *AuthService) CreateUser(user model.UserSingUp) error {
 	if err != nil {
 		return fmt.Errorf("generate hash failed: %v", err)
 	}
-	return s.postgres.CreateUser(user)
+
+	err = s.postgres.CreateUser(user)
+	if err == postgres.ErrUserAlreadyExists {
+		return ErrUserAlreadyExists
+	} else {
+		return err
+	}
 }
 
 func generateHash(password string) (string, error) {
