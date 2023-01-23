@@ -19,11 +19,6 @@ func Run() error {
 	}
 	defer db.Close()
 
-	err = db.Migrate.Down()
-	if err != migrate.ErrNoChange && err != nil {
-		return fmt.Errorf("migrate down failed: %w", err)
-	}
-
 	err = db.Migrate.Up()
 	if err != migrate.ErrNoChange && err != nil {
 		return fmt.Errorf("migrate up failed: %w", err)
