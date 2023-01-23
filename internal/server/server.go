@@ -1,14 +1,19 @@
 package server
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+	"os"
+)
 
 type Server struct {
 	httpServer *http.Server
 }
 
 func (s *Server) Run(handler http.Handler) error {
+	addr := fmt.Sprintf("%s:%s", os.Getenv("SERVERHOST"), os.Getenv("SERVERPORT"))
 	s.httpServer = &http.Server{
-		Addr:    ":8080",
+		Addr:    addr,
 		Handler: handler,
 	}
 

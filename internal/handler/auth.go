@@ -1,36 +1,37 @@
 package handler
 
 import (
-	"fmt"
+	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
 func (h *Handler) singUp(c *gin.Context) {
-	var user model.UserSingUp
+	var user service.UserSingUp
 
 	if err := c.BindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Sprint(err),
+			"error": err.Error(),
 		})
 		return
 	}
 
-	err := h.s.CreateUser(user)
+	ctx := context.Background()
+	err := h.s.CreateUser(ctx, user)
 	if err != nil {
-		if err == service.ErrUserAlreadyExists {
+		if errors.Is(err, service.ErrUserAlreadyExists) {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprint(service.ErrUserAlreadyExists),
+				"error": err.Error(),
 			})
 			return
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Sprint(err),
+			"error": err.Error(),
 		})
 		return
 	}

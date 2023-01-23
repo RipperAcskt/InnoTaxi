@@ -1,19 +1,19 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"time"
 
-	"github.com/RipperAcskt/innotaxi/internal/model"
+	"github.com/RipperAcskt/innotaxi/internal/service"
+	"github.com/pkg/errors"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
-)
-
-var (
-	ErrUserAlreadyExists error = fmt.Errorf("user already exists")
 )
 
 type Postgres struct {
@@ -24,18 +24,17 @@ type Postgres struct {
 func New(url string) (*Postgres, error) {
 	db, err := sql.Open("pgx", url)
 	if err != nil {
-		return nil, fmt.Errorf("open failed: %v", err)
+		return nil, fmt.Errorf("open failed: %w", err)
 	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("with database failed")
+		return nil, fmt.Errorf("with instance failed: %w", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance("file://internal/repo/migrations", "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(os.Getenv("MIGRATEPATH"), "postgres", driver)
 	if err != nil {
-
-		return nil, fmt.Errorf("new with database instance failed: %v", err)
+		return nil, fmt.Errorf("new with database instance failed: %w", err)
 	}
 
 	return &Postgres{
@@ -48,21 +47,22 @@ func (p *Postgres) Close() error {
 	return p.db.Close()
 }
 
-func (p *Postgres) CreateUser(user model.UserSingUp) error {
-	rows, err := p.db.Query("SELECT * FROM users")
+func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) error {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	row, err := p.db.QueryContext(queryCtx, "SELECT * FROM users WHERE phone_number = $1 OR email = $2", user.PhoneNumber, user.Email)
 	if err != nil {
-		return fmt.Errorf("query failed: %v", err)
+		return fmt.Errorf("query failed: %w", err)
 	}
 
-	defer rows.Close()
-
-	if rows.Next() {
-		return ErrUserAlreadyExists
+	if row.Next() {
+		return errors.Wrapf(service.ErrUserAlreadyExists, "user: %v", user.Name)
 	}
 
 	_, err = p.db.Exec("INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 4.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
 	if err != nil {
-		return fmt.Errorf("exec failed: %v", err)
+		return fmt.Errorf("exec failed: %w", err)
 	}
 	return nil
 }
