@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+
+	"github.com/RipperAcskt/innotaxi/config"
 )
 
 var (
@@ -29,12 +31,13 @@ type AuthRepo interface {
 	CheckUserByEmail(ctx context.Context, email string) (*UserSingIn, error)
 }
 type AuthService struct {
-	postgres AuthRepo
-	salt     string
+	AuthRepo
+	salt string
+	cfg  *config.Config
 }
 
-func NewAuthSevice(postgres AuthRepo, salt string) *AuthService {
-	return &AuthService{postgres: postgres, salt: salt}
+func NewAuthSevice(postgres AuthRepo, salt string, cfg *config.Config) *AuthService {
+	return &AuthService{postgres, salt, cfg}
 }
 
 func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
@@ -44,7 +47,7 @@ func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
 		return fmt.Errorf("generate hash failed: %w", err)
 	}
 
-	err = s.postgres.CreateUser(ctx, user)
+	err = s.CreateUser(ctx, user)
 	if err == ErrUserAlreadyExists {
 		return ErrUserAlreadyExists
 	} else {
@@ -62,7 +65,7 @@ func (s *AuthService) generateHash(password string) (string, error) {
 }
 
 func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, error) {
-	userDB, err := s.postgres.CheckUserByEmail(ctx, user.PhoneNumber)
+	userDB, err := s.CheckUserByEmail(ctx, user.PhoneNumber)
 	if err != nil {
 		return nil, fmt.Errorf("check user by email failed %w", err)
 	}
@@ -77,7 +80,7 @@ func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, erro
 		return nil, ErrIncorrectPassword
 	}
 
-	token, err := NewToken()
+	token, err := NewToken(s.cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new token failed: %w", err)
 	}

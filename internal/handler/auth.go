@@ -5,12 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
@@ -66,13 +65,7 @@ func (h *Handler) singIn(c *gin.Context) {
 		return
 	}
 
-	exp, err := strconv.Atoi(os.Getenv("RTEXP"))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Errorf("atoi rt failed: %w", err),
-		})
-	}
-	jwtExp := int((time.Duration(exp) * time.Hour * 24).Seconds())
+	jwtExp := int((time.Duration(h.cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
 	c.SetCookie("refresh_token", token.RT, jwtExp, "/users/auth", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{
@@ -80,7 +73,7 @@ func (h *Handler) singIn(c *gin.Context) {
 	})
 }
 
-func VerifyToken() gin.HandlerFunc {
+func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accessToken := make(map[string]string)
 
@@ -91,7 +84,7 @@ func VerifyToken() gin.HandlerFunc {
 			return
 		}
 
-		ok, err := service.Verify(accessToken["access_token"])
+		ok, err := service.Verify(accessToken["access_token"], cfg)
 		if err != nil {
 			if errors.Is(err, service.ErrTokenExpired) {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -123,7 +116,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		})
 	}
 
-	ok, err := service.Verify(rt)
+	ok, err := service.Verify(rt, h.cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrTokenExpired) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -143,7 +136,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	token, err := service.NewToken()
+	token, err := service.NewToken(h.cfg)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Errorf("wrong signature").Error(),
@@ -151,13 +144,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	exp, err := strconv.Atoi(os.Getenv("RTEXP"))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Errorf("atoi rt failed: %w", err),
-		})
-	}
-	jwtExp := int((time.Duration(exp) * time.Hour * 24).Seconds())
+	jwtExp := int((time.Duration(h.cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
 	c.SetCookie("refresh_token", token.RT, jwtExp, "/users/auth", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{

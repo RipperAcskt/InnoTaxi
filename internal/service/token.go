@@ -6,10 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/RipperAcskt/innotaxi/config"
 )
 
 var (
@@ -23,25 +23,17 @@ type Token struct {
 	RTExpiration     time.Time
 }
 
-func NewToken() (*Token, error) {
-	exp, err := strconv.Atoi(os.Getenv("ACCESSEXP"))
-	if err != nil {
-		return nil, fmt.Errorf("atoi access failed: %w", err)
-	}
-	jwtExp := time.Now().Add(time.Duration(exp) * time.Minute)
+func NewToken(cfg *config.Config) (*Token, error) {
+	jwtExp := time.Now().Add(time.Duration(cfg.ACCESS_TOKEN_EXP) * time.Minute)
 
-	access, accessExp, err := newJwt(jwtExp)
+	access, accessExp, err := newJwt(jwtExp, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new jwt failed: %w", err)
 	}
 
-	exp, err = strconv.Atoi(os.Getenv("RTEXP"))
-	if err != nil {
-		return nil, fmt.Errorf("atoi rt failed: %w", err)
-	}
-	jwtExp = time.Now().Add(time.Duration(exp) * 24 * time.Hour)
+	jwtExp = time.Now().Add(time.Duration(cfg.REFRESH_TOKEN_EXP) * 24 * time.Hour)
 
-	rt, rtExp, err := newJwt(jwtExp)
+	rt, rtExp, err := newJwt(jwtExp, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new rt failed: %w", err)
 	}
@@ -49,7 +41,7 @@ func NewToken() (*Token, error) {
 	return &Token{access, rt, accessExp, rtExp}, nil
 }
 
-func newJwt(jwtExp time.Time) (string, time.Time, error) {
+func newJwt(jwtExp time.Time, cfg *config.Config) (string, time.Time, error) {
 	header := make(map[string]string, 2)
 	header["typ"] = "JWT"
 	header["alg"] = "HS256"
@@ -74,7 +66,7 @@ func newJwt(jwtExp time.Time) (string, time.Time, error) {
 
 	data := fmt.Sprintf("%s.%s", b64Header, b64Playload)
 
-	secret := []byte(os.Getenv("HS256SECRET"))
+	secret := []byte(cfg.HS256_SECRET)
 	h := hmac.New(sha256.New, secret)
 
 	_, err = h.Write([]byte(data))
@@ -90,7 +82,7 @@ func newJwt(jwtExp time.Time) (string, time.Time, error) {
 	return jwt, jwtExp, nil
 }
 
-func Verify(token string) (bool, error) {
+func Verify(token string, cfg *config.Config) (bool, error) {
 	rawSegs := strings.Split(token, ".")
 	if len(rawSegs) != 3 {
 		return false, nil
@@ -137,7 +129,7 @@ func Verify(token string) (bool, error) {
 
 	body := fmt.Sprintf("%s.%s", rawSegs[0], rawSegs[1])
 
-	secret := []byte(os.Getenv("HS256SECRET"))
+	secret := []byte(cfg.HS256_SECRET)
 	h := hmac.New(sha256.New, secret)
 
 	_, err = h.Write([]byte(body))

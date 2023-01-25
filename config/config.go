@@ -16,6 +16,10 @@ type Config struct {
 	SERVER_HOST string `mapstructure:"SERVER_HOST"`
 
 	SALT string `mapstructure:"SALT"`
+
+	ACCESS_TOKEN_EXP  int    `mapstructure:"ACCESS_TOKEN_EXP"`
+	REFRESH_TOKEN_EXP int    `mapstructure:"REFRESH_TOKEN_EXP"`
+	HS256_SECRET      string `mapstructure:"HS256_SECRET"`
 }
 
 func New() (*Config, error) {
@@ -35,6 +39,7 @@ func New() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal failed: %w", err)
 	}
+	fmt.Println(config)
 	return config, nil
 }
 

@@ -1,16 +1,18 @@
 package handler
 
 import (
+	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	s *service.Service
+	s   *service.Service
+	cfg *config.Config
 }
 
-func New(s *service.Service) *Handler {
-	return &Handler{s}
+func New(s *service.Service, cfg *config.Config) *Handler {
+	return &Handler{s, cfg}
 }
 
 func (h *Handler) InitRouters() *gin.Engine {
@@ -23,6 +25,6 @@ func (h *Handler) InitRouters() *gin.Engine {
 	auth.POST("sing-in", h.singIn)
 	auth.POST("refresh", h.Refresh)
 
-	users.GET("/test", VerifyToken(), h.Test)
+	users.GET("/test", VerifyToken(h.cfg), h.Test)
 	return router
 }
