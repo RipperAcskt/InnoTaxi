@@ -53,7 +53,7 @@ func (h *Handler) singIn(c *gin.Context) {
 	token, err := h.s.SingIn(ctx, user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserDoesNotExists) || errors.Is(err, service.ErrIncorrectPassword) {
-			c.JSON(http.StatusBadRequest, gin.H{
+			c.JSON(http.StatusForbidden, gin.H{
 				"error": err.Error(),
 			})
 			return
@@ -78,7 +78,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 		accessToken := make(map[string]string)
 
 		if err := c.BindJSON(&accessToken); err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": err.Error(),
 			})
 			return
@@ -98,7 +98,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": fmt.Errorf("wrong signature").Error(),
 			})
 			return
