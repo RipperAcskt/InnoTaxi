@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -65,11 +64,9 @@ func (h *Handler) singIn(c *gin.Context) {
 		return
 	}
 
-	jwtExp := int((time.Duration(h.cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
-	c.SetCookie("refresh_token", token.RT, jwtExp, "/users/auth", "", false, true)
-
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": token.Access,
+		"access_token":  token.Access,
+		"refresh_token": token.RT,
 	})
 }
 
@@ -109,14 +106,16 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 }
 
 func (h *Handler) Refresh(c *gin.Context) {
-	rt, err := c.Cookie("refresh_token")
-	if err != nil {
+	refresh := make(map[string]string)
+
+	if err := c.BindJSON(&refresh); err != nil {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"error": fmt.Errorf("get refresh token failed").Error(),
+			"error": err.Error(),
 		})
+		return
 	}
 
-	ok, err := service.Verify(rt, h.cfg)
+	ok, err := service.Verify(refresh["refresh_token"], h.cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrTokenExpired) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -130,7 +129,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 	if !ok {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": fmt.Errorf("wrong signature").Error(),
 		})
 		return
@@ -138,16 +137,14 @@ func (h *Handler) Refresh(c *gin.Context) {
 
 	token, err := service.NewToken(h.cfg)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": fmt.Errorf("wrong signature").Error(),
 		})
 		return
 	}
 
-	jwtExp := int((time.Duration(h.cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
-	c.SetCookie("refresh_token", token.RT, jwtExp, "/users/auth", "", false, true)
-
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": token.Access,
+		"access_token":  token.Access,
+		"refresh_token": token.RT,
 	})
 }
