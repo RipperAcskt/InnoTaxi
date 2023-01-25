@@ -1,0 +1,155 @@
+package service
+
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+)
+
+var (
+	ErrTokenExpired = fmt.Errorf("token expired")
+)
+
+type Token struct {
+	Access           string `json:"access_token"`
+	RT               string `json:"refresh_token"`
+	AccessExpiration time.Time
+	RTExpiration     time.Time
+}
+
+func NewToken() (*Token, error) {
+	exp, err := strconv.Atoi(os.Getenv("ACCESSEXP"))
+	if err != nil {
+		return nil, fmt.Errorf("atoi access failed: %w", err)
+	}
+	jwtExp := time.Now().Add(time.Duration(exp) * time.Minute)
+
+	access, accessExp, err := newJwt(jwtExp)
+	if err != nil {
+		return nil, fmt.Errorf("new jwt failed: %w", err)
+	}
+
+	exp, err = strconv.Atoi(os.Getenv("RTEXP"))
+	if err != nil {
+		return nil, fmt.Errorf("atoi rt failed: %w", err)
+	}
+	jwtExp = time.Now().Add(time.Duration(exp) * 24 * time.Hour)
+
+	rt, rtExp, err := newJwt(jwtExp)
+	if err != nil {
+		return nil, fmt.Errorf("new rt failed: %w", err)
+	}
+
+	return &Token{access, rt, accessExp, rtExp}, nil
+}
+
+func newJwt(jwtExp time.Time) (string, time.Time, error) {
+	header := make(map[string]string, 2)
+	header["typ"] = "JWT"
+	header["alg"] = "HS256"
+
+	headerEncoded, err := json.Marshal(header)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("marshal header failed: %w", err)
+	}
+
+	b64Header := base64.RawURLEncoding.EncodeToString(headerEncoded)
+
+	playload := make(map[string]uint64, 2)
+
+	playload["exp"] = uint64(jwtExp.UTC().Unix())
+
+	playloadEncoded, err := json.Marshal(playload)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("marshal playload failed: %w", err)
+	}
+
+	b64Playload := base64.RawURLEncoding.EncodeToString(playloadEncoded)
+
+	data := fmt.Sprintf("%s.%s", b64Header, b64Playload)
+
+	secret := []byte(os.Getenv("HS256SECRET"))
+	h := hmac.New(sha256.New, secret)
+
+	_, err = h.Write([]byte(data))
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("sha256 write failed: %w", err)
+	}
+
+	sig := h.Sum(nil)
+	b64Sig := base64.RawURLEncoding.EncodeToString(sig)
+
+	jwt := fmt.Sprintf("%s.%s", data, b64Sig)
+
+	return jwt, jwtExp, nil
+}
+
+func Verify(token string) (bool, error) {
+	rawSegs := strings.Split(token, ".")
+	if len(rawSegs) != 3 {
+		return false, nil
+	}
+
+	b64header, err := base64.RawURLEncoding.DecodeString(rawSegs[0])
+	if err != nil {
+		return false, fmt.Errorf("decode string failed: %w", err)
+	}
+
+	header := make(map[string]string, 2)
+	err = json.Unmarshal(b64header, &header)
+	if err != nil {
+		return false, fmt.Errorf("json unmarshal header error: %w", err)
+	}
+
+	if header["typ"] != "JWT" {
+		return false, nil
+	}
+
+	alg, ok := header["alg"]
+	if !ok {
+		return false, nil
+	}
+
+	if alg != "HS256" {
+		return false, nil
+	}
+
+	b64playload, err := base64.RawURLEncoding.DecodeString(rawSegs[1])
+	if err != nil {
+		return false, fmt.Errorf("decode string failed: %w", err)
+	}
+
+	playload := make(map[string]uint64, 2)
+	err = json.Unmarshal(b64playload, &playload)
+	if err != nil {
+		return false, fmt.Errorf("json unmarshal playload error: %w", err)
+	}
+
+	if playload["exp"] < uint64(time.Now().UTC().Unix()) {
+		return false, ErrTokenExpired
+	}
+
+	body := fmt.Sprintf("%s.%s", rawSegs[0], rawSegs[1])
+
+	secret := []byte(os.Getenv("HS256SECRET"))
+	h := hmac.New(sha256.New, secret)
+
+	_, err = h.Write([]byte(body))
+	if err != nil {
+		return false, fmt.Errorf("sha256 write failed: %w", err)
+	}
+
+	sig, err := base64.RawURLEncoding.DecodeString(rawSegs[2])
+	if err != nil {
+		return false, fmt.Errorf("decode string failed: %w", err)
+	}
+
+	expectedSig := h.Sum(nil)
+	return hmac.Equal([]byte(sig), expectedSig), nil
+}
