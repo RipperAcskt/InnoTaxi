@@ -1,19 +1,18 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
-	"os"
+
+	"github.com/RipperAcskt/innotaxi/config"
 )
 
 type Server struct {
 	httpServer *http.Server
 }
 
-func (s *Server) Run(handler http.Handler) error {
-	addr := fmt.Sprintf("%s:%s", os.Getenv("SERVERHOST"), os.Getenv("SERVERPORT"))
+func (s *Server) Run(handler http.Handler, cfg *config.Config) error {
 	s.httpServer = &http.Server{
-		Addr:    addr,
+		Addr:    cfg.SERVER_HOST,
 		Handler: handler,
 	}
 

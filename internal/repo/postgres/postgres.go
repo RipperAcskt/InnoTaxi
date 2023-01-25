@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"time"
 
+	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
-	"github.com/pkg/errors"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -21,10 +20,15 @@ type Postgres struct {
 	Migrate *migrate.Migrate
 }
 
-func New(url string) (*Postgres, error) {
+func New(url string, config *config.Config) (*Postgres, error) {
 	db, err := sql.Open("pgx", url)
 	if err != nil {
 		return nil, fmt.Errorf("open failed: %w", err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("ping failed: %w", err)
 	}
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
@@ -32,7 +36,7 @@ func New(url string) (*Postgres, error) {
 		return nil, fmt.Errorf("with instance failed: %w", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(os.Getenv("MIGRATEPATH"), "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(config.MIGRATE_PATH, "postgres", driver)
 	if err != nil {
 		return nil, fmt.Errorf("new with database instance failed: %w", err)
 	}
