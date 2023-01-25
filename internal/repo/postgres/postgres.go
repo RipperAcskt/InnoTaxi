@@ -28,6 +28,11 @@ func New(url string, cfg *config.Config) (*Postgres, error) {
 		return nil, fmt.Errorf("open failed: %w", err)
 	}
 
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("ping failed: %w", err)
+	}
+
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("with instance failed: %w", err)

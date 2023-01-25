@@ -21,12 +21,12 @@ type AuthRepo interface {
 	CreateUser(ctx context.Context, user UserSingUp) error
 }
 type AuthService struct {
-	postgres AuthRepo
-	salt     string
+	AuthRepo
+	salt string
 }
 
 func NewAuthSevice(postgres AuthRepo, salt string) *AuthService {
-	return &AuthService{postgres: postgres, salt: salt}
+	return &AuthService{postgres, salt}
 }
 
 func (s *AuthService) CreateUser(ctx context.Context, user UserSingUp) error {
@@ -36,12 +36,12 @@ func (s *AuthService) CreateUser(ctx context.Context, user UserSingUp) error {
 		return fmt.Errorf("generate hash failed: %w", err)
 	}
 
-	err = s.postgres.CreateUser(ctx, user)
-	if err == ErrUserAlreadyExists {
-		return ErrUserAlreadyExists
-	} else {
+	err = s.CreateUser(ctx, user)
+	if err != nil {
 		return err
 	}
+
+	return nil
 }
 
 func (s *AuthService) generateHash(password string) (string, error) {

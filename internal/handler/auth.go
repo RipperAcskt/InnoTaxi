@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"errors"
 	"net/http"
 
@@ -20,8 +19,7 @@ func (h *Handler) singUp(c *gin.Context) {
 		return
 	}
 
-	ctx := context.Background()
-	err := h.s.CreateUser(ctx, user)
+	err := h.s.CreateUser(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserAlreadyExists) {
 			c.JSON(http.StatusBadRequest, gin.H{
