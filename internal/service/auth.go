@@ -29,7 +29,7 @@ func NewAuthSevice(postgres AuthRepo, salt string) *AuthService {
 	return &AuthService{postgres, salt}
 }
 
-func (s *AuthService) CreateUser(ctx context.Context, user UserSingUp) error {
+func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
 	var err error
 	user.Password, err = s.generateHash(user.Password)
 	if err != nil {

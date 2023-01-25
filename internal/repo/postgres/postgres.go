@@ -13,7 +13,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/pkg/errors"
 )
 
 type Postgres struct {
@@ -58,16 +57,13 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	row, err := p.db.QueryContext(queryCtx, "SELECT * FROM users WHERE phone_number = $1 OR email = $2", user.PhoneNumber, user.Email)
-	if err != nil {
-		return fmt.Errorf("query failed: %w", err)
+	err := p.db.QueryRowContext(queryCtx, "SELECT name FROM users WHERE phone_number = $1 OR email = $2", user.PhoneNumber, user.Email).Scan(&user.Name)
+	if err == nil {
+		return fmt.Errorf("user: %v: %w", user.Name, service.ErrUserAlreadyExists)
+
 	}
 
-	if row.Next() {
-		return errors.Wrapf(service.ErrUserAlreadyExists, "user: %v", user.Name)
-	}
-
-	_, err = p.db.Exec("INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 4.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
+	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 4.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
 	if err != nil {
 		return fmt.Errorf("exec failed: %w", err)
 	}

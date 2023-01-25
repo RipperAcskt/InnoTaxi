@@ -19,7 +19,7 @@ func (h *Handler) singUp(c *gin.Context) {
 		return
 	}
 
-	err := h.s.CreateUser(c.Request.Context(), user)
+	err := h.s.SingUp(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserAlreadyExists) {
 			c.JSON(http.StatusBadRequest, gin.H{
