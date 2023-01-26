@@ -32,12 +32,18 @@ func New(cfg *config.Config) (*Postgres, error) {
 		return nil, fmt.Errorf("ping failed: %w", err)
 	}
 
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("ping failed: %w", err)
+	}
+
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("with instance failed: %w", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(cfg.MIGRATE_PATH, "postgres", driver)
+	m, err := migrate.NewWithDatabaseInstance(config.MIGRATE_PATH, "postgres", driver)
 	if err != nil {
 		return nil, fmt.Errorf("new with database instance failed: %w", err)
 	}
@@ -68,4 +74,25 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 		return fmt.Errorf("exec failed: %w", err)
 	}
 	return nil
+}
+
+func (p *Postgres) CheckUserByEmail(ctx context.Context, email string) (*service.UserSingIn, error) {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	row, err := p.db.QueryContext(queryCtx, "SELECT phone_number, password FROM users WHERE phone_number = $1", email)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+
+	if row.Next() {
+		var user service.UserSingIn
+		err := row.Scan(&user.PhoneNumber, &user.Password)
+		if err != nil {
+			return nil, fmt.Errorf("scan failed: %w", err)
+		}
+		return &user, nil
+	}
+
+	return nil, service.ErrUserDoesNotExists
 }
