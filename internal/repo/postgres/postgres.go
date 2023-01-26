@@ -21,8 +21,8 @@ type Postgres struct {
 	cfg     *config.Config
 }
 
-func New(url string, cfg *config.Config) (*Postgres, error) {
-	db, err := sql.Open("pgx", url)
+func New(cfg *config.Config) (*Postgres, error) {
+	db, err := sql.Open("pgx", cfg.GetDBUrl())
 	if err != nil {
 		return nil, fmt.Errorf("open failed: %w", err)
 	}

@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/handler"
@@ -19,7 +18,7 @@ func Run() error {
 		return fmt.Errorf("config new failed: %w", err)
 	}
 
-	db, err := postgres.New(cfg.GetDBUrl(), cfg)
+	db, err := postgres.New(cfg)
 	if err != nil {
 		return fmt.Errorf("postgres new failed: %w", err)
 	}
@@ -30,7 +29,7 @@ func Run() error {
 		return fmt.Errorf("migrate up failed: %w", err)
 	}
 
-	service := service.New(db, os.Getenv("SALT"))
+	service := service.New(db, cfg.SALT)
 	handler := handler.New(service)
 	server := new(server.Server)
 	if err := server.Run(handler.InitRouters(), cfg); err != nil {
