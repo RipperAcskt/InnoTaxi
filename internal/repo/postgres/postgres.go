@@ -112,3 +112,22 @@ func (p *Postgres) GetUserById(ctx context.Context, id string) (*model.User, err
 
 	return user, err
 }
+
+func (p *Postgres) UpdateUserById(ctx context.Context, id string, user *model.User) error {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", user.Name, user.PhoneNumber, user.Email, id)
+	if err != nil {
+		return fmt.Errorf("exec context failed: %w", err)
+	}
+
+	num, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected failed: %w", err)
+	}
+	if num == 0 {
+		return service.ErrUserDoesNotExists
+	}
+	return nil
+}

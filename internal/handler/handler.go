@@ -26,5 +26,6 @@ func (h *Handler) InitRouters() *gin.Engine {
 	auth.POST("refresh", h.Refresh)
 
 	users.GET("/profile/:id", VerifyToken(h.cfg), h.GetProfile)
+	users.PUT("/profile/:id", VerifyToken(h.cfg), h.UpdateProfile)
 	return router
 }
