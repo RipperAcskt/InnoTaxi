@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/RipperAcskt/innotaxi/config"
+	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -94,4 +95,20 @@ func (p *Postgres) CheckUserByEmail(ctx context.Context, email string) (*service
 	}
 
 	return nil, service.ErrUserDoesNotExists
+}
+
+func (p *Postgres) GetUserById(ctx context.Context, id string) (*model.User, error) {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	user := &model.User{}
+	err := p.db.QueryRowContext(queryCtx, "SELECT name, phone_number, email, raiting FROM users WHERE id = $1", id).Scan(&user.Name, &user.PhoneNumber, &user.Email, &user.Raiting)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, service.ErrUserDoesNotExists
+		}
+		return nil, fmt.Errorf("query row context failed: %w", err)
+	}
+
+	return user, err
 }
