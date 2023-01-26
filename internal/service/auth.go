@@ -48,12 +48,9 @@ func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
 	}
 
 	err = s.CreateUser(ctx, user)
-	if err == ErrUserAlreadyExists {
-		return ErrUserAlreadyExists
-	} else {
+	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
