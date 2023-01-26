@@ -79,7 +79,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		ok, err := service.Verify(accessToken["access_token"], cfg)
+		ok, id, err := service.Verify(accessToken["access_token"], cfg)
 		if err != nil {
 			if errors.Is(err, service.ErrTokenExpired) {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -98,6 +98,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 			})
 			return
 		}
+		c.Set("id", fmt.Sprintf("%v", id))
 		c.Next()
 
 	}
@@ -113,7 +114,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	ok, err := service.Verify(refresh["refresh_token"], h.cfg)
+	ok, id, err := service.Verify(refresh["refresh_token"], h.cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrTokenExpired) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -133,7 +134,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	token, err := service.NewToken(h.cfg)
+	token, err := service.NewToken(id, h.cfg)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": fmt.Errorf("wrong signature").Error(),

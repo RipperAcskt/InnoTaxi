@@ -23,17 +23,17 @@ type Token struct {
 	RTExpiration     time.Time
 }
 
-func NewToken(cfg *config.Config) (*Token, error) {
+func NewToken(id uint64, cfg *config.Config) (*Token, error) {
 	jwtExp := time.Now().Add(time.Duration(cfg.ACCESS_TOKEN_EXP) * time.Minute)
 
-	access, accessExp, err := newJwt(jwtExp, cfg)
+	access, accessExp, err := newJwt(jwtExp, id, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new jwt failed: %w", err)
 	}
 
 	jwtExp = time.Now().Add(time.Duration(cfg.REFRESH_TOKEN_EXP) * 24 * time.Hour)
 
-	rt, rtExp, err := newJwt(jwtExp, cfg)
+	rt, rtExp, err := newJwt(jwtExp, id, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new rt failed: %w", err)
 	}
@@ -41,7 +41,7 @@ func NewToken(cfg *config.Config) (*Token, error) {
 	return &Token{access, rt, accessExp, rtExp}, nil
 }
 
-func newJwt(jwtExp time.Time, cfg *config.Config) (string, time.Time, error) {
+func newJwt(jwtExp time.Time, id uint64, cfg *config.Config) (string, time.Time, error) {
 	header := make(map[string]string, 2)
 	header["typ"] = "JWT"
 	header["alg"] = "HS256"
@@ -55,6 +55,7 @@ func newJwt(jwtExp time.Time, cfg *config.Config) (string, time.Time, error) {
 
 	playload := make(map[string]uint64, 2)
 
+	playload["user_id"] = id
 	playload["exp"] = uint64(jwtExp.UTC().Unix())
 
 	playloadEncoded, err := json.Marshal(playload)
@@ -82,49 +83,49 @@ func newJwt(jwtExp time.Time, cfg *config.Config) (string, time.Time, error) {
 	return jwt, jwtExp, nil
 }
 
-func Verify(token string, cfg *config.Config) (bool, error) {
+func Verify(token string, cfg *config.Config) (bool, uint64, error) {
 	rawSegs := strings.Split(token, ".")
 	if len(rawSegs) != 3 {
-		return false, nil
+		return false, 0, nil
 	}
 
 	b64header, err := base64.RawURLEncoding.DecodeString(rawSegs[0])
 	if err != nil {
-		return false, fmt.Errorf("decode string failed: %w", err)
+		return false, 0, fmt.Errorf("decode string failed: %w", err)
 	}
 
 	header := make(map[string]string, 2)
 	err = json.Unmarshal(b64header, &header)
 	if err != nil {
-		return false, fmt.Errorf("json unmarshal header error: %w", err)
+		return false, 0, fmt.Errorf("json unmarshal header error: %w", err)
 	}
 
 	if header["typ"] != "JWT" {
-		return false, nil
+		return false, 0, nil
 	}
 
 	alg, ok := header["alg"]
 	if !ok {
-		return false, nil
+		return false, 0, nil
 	}
 
 	if alg != "HS256" {
-		return false, nil
+		return false, 0, nil
 	}
 
 	b64playload, err := base64.RawURLEncoding.DecodeString(rawSegs[1])
 	if err != nil {
-		return false, fmt.Errorf("decode string failed: %w", err)
+		return false, 0, fmt.Errorf("decode string failed: %w", err)
 	}
 
 	playload := make(map[string]uint64, 2)
 	err = json.Unmarshal(b64playload, &playload)
 	if err != nil {
-		return false, fmt.Errorf("json unmarshal playload error: %w", err)
+		return false, 0, fmt.Errorf("json unmarshal playload error: %w", err)
 	}
 
 	if playload["exp"] < uint64(time.Now().UTC().Unix()) {
-		return false, ErrTokenExpired
+		return false, 0, ErrTokenExpired
 	}
 
 	body := fmt.Sprintf("%s.%s", rawSegs[0], rawSegs[1])
@@ -134,14 +135,14 @@ func Verify(token string, cfg *config.Config) (bool, error) {
 
 	_, err = h.Write([]byte(body))
 	if err != nil {
-		return false, fmt.Errorf("sha256 write failed: %w", err)
+		return false, 0, fmt.Errorf("sha256 write failed: %w", err)
 	}
 
 	sig, err := base64.RawURLEncoding.DecodeString(rawSegs[2])
 	if err != nil {
-		return false, fmt.Errorf("decode string failed: %w", err)
+		return false, 0, fmt.Errorf("decode string failed: %w", err)
 	}
 
 	expectedSig := h.Sum(nil)
-	return hmac.Equal([]byte(sig), expectedSig), nil
+	return hmac.Equal([]byte(sig), expectedSig), playload["user_id"], nil
 }

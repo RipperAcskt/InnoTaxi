@@ -28,7 +28,7 @@ type UserSingIn struct {
 
 type AuthRepo interface {
 	CreateUser(ctx context.Context, user UserSingUp) error
-	CheckUserByPhoneNumber(ctx context.Context, email string) (*UserSingIn, error)
+	CheckUserByPhoneNumber(ctx context.Context, email string) (*UserSingIn, uint64, error)
 }
 type AuthService struct {
 	AuthRepo
@@ -65,7 +65,7 @@ func (s *AuthService) generateHash(password string) (string, error) {
 }
 
 func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, error) {
-	userDB, err := s.CheckUserByPhoneNumber(ctx, user.PhoneNumber)
+	userDB, id, err := s.CheckUserByPhoneNumber(ctx, user.PhoneNumber)
 	if err != nil {
 		return nil, fmt.Errorf("check user by email failed %w", err)
 	}
@@ -80,7 +80,7 @@ func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, erro
 		return nil, ErrIncorrectPassword
 	}
 
-	token, err := NewToken(s.cfg)
+	token, err := NewToken(id, s.cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new token failed: %w", err)
 	}
