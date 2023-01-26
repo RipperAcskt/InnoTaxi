@@ -47,8 +47,7 @@ func (h *Handler) singIn(c *gin.Context) {
 		return
 	}
 
-	ctx := context.Background()
-	token, err := h.s.SingIn(ctx, user)
+	token, err := h.s.SingIn(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserDoesNotExists) || errors.Is(err, service.ErrIncorrectPassword) {
 			c.JSON(http.StatusForbidden, gin.H{
