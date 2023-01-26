@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"time"
 
 	"github.com/RipperAcskt/innotaxi/config"
 )
@@ -30,14 +31,20 @@ type AuthRepo interface {
 	CreateUser(ctx context.Context, user UserSingUp) error
 	CheckUserByPhoneNumber(ctx context.Context, email string) (*UserSingIn, uint64, error)
 }
+
+type TokenRepo interface {
+	AddToken(token string, expired time.Duration) error
+	GetToken(token string) bool
+}
 type AuthService struct {
 	AuthRepo
+	TokenRepo
 	salt string
 	cfg  *config.Config
 }
 
-func NewAuthSevice(postgres AuthRepo, salt string, cfg *config.Config) *AuthService {
-	return &AuthService{postgres, salt, cfg}
+func NewAuthSevice(postgres AuthRepo, redis TokenRepo, salt string, cfg *config.Config) *AuthService {
+	return &AuthService{postgres, redis, salt, cfg}
 }
 
 func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
@@ -86,4 +93,12 @@ func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, erro
 	}
 
 	return token, nil
+}
+
+func (s *AuthService) Logout(userId string, token string, expired time.Duration) error {
+	return s.AddToken(token, expired)
+}
+
+func (s *AuthService) CheckToken(userId string) bool {
+	return s.GetToken(userId)
 }

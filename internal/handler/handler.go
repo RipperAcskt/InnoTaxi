@@ -23,8 +23,9 @@ func (h *Handler) InitRouters() *gin.Engine {
 	auth := users.Group("/auth")
 	auth.POST("sing-up", h.singUp)
 	auth.POST("sing-in", h.singIn)
-	auth.POST("refresh", h.Refresh)
+	auth.GET("refresh", h.Refresh)
+	auth.GET("logout", h.VerifyToken(), h.Logout)
 
-	users.GET("/test/:id", VerifyToken(h.cfg), h.Test)
+	users.GET("/test/:id", h.VerifyToken(), h.Test)
 	return router
 }

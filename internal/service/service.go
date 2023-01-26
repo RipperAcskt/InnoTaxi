@@ -6,8 +6,8 @@ type Service struct {
 	*AuthService
 }
 
-func New(postgres AuthRepo, salt string, cfg *config.Config) *Service {
+func New(postgres AuthRepo, redis TokenRepo, salt string, cfg *config.Config) *Service {
 	return &Service{
-		AuthService: NewAuthSevice(postgres, salt, cfg),
+		AuthService: NewAuthSevice(postgres, redis, salt, cfg),
 	}
 }

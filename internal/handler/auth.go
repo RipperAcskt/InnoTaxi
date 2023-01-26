@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
@@ -71,11 +70,11 @@ func (h *Handler) singIn(c *gin.Context) {
 	})
 }
 
-func VerifyToken(cfg *config.Config) gin.HandlerFunc {
+func (h *Handler) VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accessToken := strings.Split(c.GetHeader("Authorization"), " ")[1]
 
-		ok, id, err := service.Verify(accessToken, cfg)
+		ok, id, err := service.Verify(accessToken, h.cfg)
 		if err != nil {
 			if errors.Is(err, service.ErrTokenExpired) {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -94,6 +93,12 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 			})
 			return
 		}
+
+		if !h.s.CheckToken(accessToken) {
+			c.AbortWithStatus(403)
+			return
+		}
+
 		c.Set("id", fmt.Sprintf("%v", id))
 		c.Next()
 
@@ -150,4 +155,18 @@ func (h *Handler) Refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token.Access,
 	})
+}
+
+func (h *Handler) Logout(c *gin.Context) {
+	id, _ := c.Get("id")
+	exp := time.Duration(h.cfg.ACCESS_TOKEN_EXP) * time.Minute
+	err := h.s.Logout(id.(string), strings.Split(c.GetHeader("Authorization"), " ")[1], exp)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	c.SetCookie("refresh_token", "", time.Now().Second(), "/users/auth", "", false, true)
+	c.Status(200)
 }
