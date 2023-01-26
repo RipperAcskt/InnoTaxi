@@ -43,7 +43,6 @@ func New(cfg *config.Config) (*Postgres, error) {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(cfg.MIGRATE_PATH, "postgres", driver)
-	m, err := migrate.NewWithDatabaseInstance(config.MIGRATE_PATH, "postgres", driver)
 	if err != nil {
 		return nil, fmt.Errorf("new with database instance failed: %w", err)
 	}
