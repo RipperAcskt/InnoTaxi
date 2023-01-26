@@ -43,7 +43,6 @@ func New(cfg *config.Config) (*Postgres, error) {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(cfg.MIGRATE_PATH, "postgres", driver)
-	m, err := migrate.NewWithDatabaseInstance(config.MIGRATE_PATH, "postgres", driver)
 	if err != nil {
 		return nil, fmt.Errorf("new with database instance failed: %w", err)
 	}
@@ -76,7 +75,7 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 	return nil
 }
 
-func (p *Postgres) CheckUserByEmail(ctx context.Context, email string) (*service.UserSingIn, error) {
+func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, email string) (*service.UserSingIn, error) {
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

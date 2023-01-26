@@ -28,7 +28,7 @@ type UserSingIn struct {
 
 type AuthRepo interface {
 	CreateUser(ctx context.Context, user UserSingUp) error
-	CheckUserByEmail(ctx context.Context, email string) (*UserSingIn, error)
+	CheckUserByPhoneNumber(ctx context.Context, email string) (*UserSingIn, error)
 }
 type AuthService struct {
 	AuthRepo
@@ -48,9 +48,7 @@ func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
 	}
 
 	err = s.CreateUser(ctx, user)
-	if err == ErrUserAlreadyExists {
-		return ErrUserAlreadyExists
-	} else {
+	if err != nil {
 		return err
 	}
 
@@ -67,7 +65,7 @@ func (s *AuthService) generateHash(password string) (string, error) {
 }
 
 func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, error) {
-	userDB, err := s.CheckUserByEmail(ctx, user.PhoneNumber)
+	userDB, err := s.CheckUserByPhoneNumber(ctx, user.PhoneNumber)
 	if err != nil {
 		return nil, fmt.Errorf("check user by email failed %w", err)
 	}
