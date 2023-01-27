@@ -63,13 +63,14 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	err := p.db.QueryRowContext(queryCtx, "SELECT name FROM users WHERE phone_number = $1 OR email = $2", user.PhoneNumber, user.Email).Scan(&user.Name)
+	var name string
+	err := p.db.QueryRowContext(queryCtx, "SELECT name FROM users WHERE (phone_number = $1 OR email = $2) AND deleted = FALSE", user.PhoneNumber, user.Email).Scan(&name)
 	if err == nil {
 		return fmt.Errorf("user: %v: %w", user.Name, service.ErrUserAlreadyExists)
 
 	}
 
-	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 4.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
+	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting, deleted) VALUES($1, $2, $3, $4, 4.0, FALSE)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
 	if err != nil {
 		return fmt.Errorf("exec failed: %w", err)
 	}
