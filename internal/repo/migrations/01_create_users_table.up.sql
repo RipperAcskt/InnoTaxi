@@ -4,5 +4,6 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number VARCHAR(30) NOT NULL UNIQUE,
     email VARCHAR(30) NOT NULL UNIQUE,
     password BYTEA NOT NULL,
-    raiting FLOAT(8) NOT NULL
+    raiting FLOAT(8) NOT NULL,
+    deleted BOOLEAN NOT NULL
 );

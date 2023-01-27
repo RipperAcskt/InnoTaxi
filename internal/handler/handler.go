@@ -27,5 +27,6 @@ func (h *Handler) InitRouters() *gin.Engine {
 
 	users.GET("/profile/:id", VerifyToken(h.cfg), h.GetProfile)
 	users.PUT("/profile/:id", h.UpdateProfile)
+	users.DELETE("/:id", VerifyToken(h.cfg), h.DeleteUser)
 	return router
 }

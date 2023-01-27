@@ -44,3 +44,14 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 
 	c.Status(200)
 }
+
+func (h *Handler) DeleteUser(c *gin.Context) {
+	err := h.s.DeleteUser(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	c.Status(200)
+}

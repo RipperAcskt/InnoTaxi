@@ -131,3 +131,22 @@ func (p *Postgres) UpdateUserById(ctx context.Context, id string, user *model.Us
 	}
 	return nil
 }
+
+func (p *Postgres) DeleteUserById(ctx context.Context, id string) error {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET deleted = TRUE WHERE id = $1", id)
+	if err != nil {
+		return fmt.Errorf("exec context failed: %w", err)
+	}
+
+	num, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rows affected failed: %w", err)
+	}
+	if num == 0 {
+		return service.ErrUserDoesNotExists
+	}
+	return nil
+}
