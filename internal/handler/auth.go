@@ -99,7 +99,7 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("id", fmt.Sprintf("%v", id))
+		c.Set("user_id", fmt.Sprintf("%v", id))
 		c.Next()
 
 	}
