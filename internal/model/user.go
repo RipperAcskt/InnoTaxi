@@ -1,8 +1,8 @@
 package model
 
 type User struct {
-	Name        string
-	PhoneNumber string
-	Email       string
+	Name        *string `json:"name"`
+	PhoneNumber *string `json:"phone_number"`
+	Email       *string `json:"email"`
 	Raiting     float64
 }
