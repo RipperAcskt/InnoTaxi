@@ -94,7 +94,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 			})
 			return
 		}
-		c.Set("id", fmt.Sprintf("%v", id))
+		c.Set("users_id", fmt.Sprintf("%v", id))
 		c.Next()
 
 	}
