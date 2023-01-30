@@ -63,30 +63,29 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 
 	}
 
-	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 4.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
+	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 0.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
 	if err != nil {
 		return fmt.Errorf("exec failed: %w", err)
 	}
 	return nil
 }
 
-func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, phone_number string) (*service.UserSingIn, uint64, error) {
+func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, phone_number string) (*service.UserSingIn, error) {
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	row := p.db.QueryRowContext(queryCtx, "SELECT id, phone_number, password FROM users WHERE phone_number = $1", phone_number)
 
-	var id uint64
 	var user service.UserSingIn
 
-	err := row.Scan(&id, &user.PhoneNumber, &user.Password)
+	err := row.Scan(&user.ID, &user.PhoneNumber, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, 0, service.ErrUserDoesNotExists
+			return nil, service.ErrUserDoesNotExists
 		}
 
-		return nil, 0, fmt.Errorf("scan failed: %w", err)
+		return nil, fmt.Errorf("scan failed: %w", err)
 	}
 
-	return &user, id, nil
+	return &user, nil
 }
