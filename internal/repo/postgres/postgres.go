@@ -76,7 +76,7 @@ func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, phone_number stri
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	row := p.db.QueryRowContext(queryCtx, "SELECT id, phone_number, password FROM users WHERE phone_number = $1", phone_number)
+	row := p.db.QueryRowContext(queryCtx, "SELECT id, phone_number, password FROM users WHERE phone_number = $1 AND status = 0", phone_number)
 
 	var user service.UserSingIn
 
@@ -112,7 +112,7 @@ func (p *Postgres) UpdateUserById(ctx context.Context, id string, user *model.Us
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", user.Name, user.PhoneNumber, user.Email, id)
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4 AND status = 0", user.Name, user.PhoneNumber, user.Email, id)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}
@@ -131,7 +131,7 @@ func (p *Postgres) DeleteUserById(ctx context.Context, id string) error {
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET status = 1 WHERE id = $1", id)
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET status = 1 WHERE id = $1 AND status = 0", id)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}
