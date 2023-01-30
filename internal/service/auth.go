@@ -4,10 +4,14 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+
+	"github.com/RipperAcskt/innotaxi/config"
 )
 
 var (
-	ErrUserAlreadyExists error = fmt.Errorf("user already exists")
+	ErrUserAlreadyExists = fmt.Errorf("user already exists")
+	ErrUserDoesNotExists = fmt.Errorf("user does not exists")
+	ErrIncorrectPassword = fmt.Errorf("incorrect password")
 )
 
 type UserSingUp struct {
@@ -17,16 +21,24 @@ type UserSingUp struct {
 	Password    string `json:"password" binding:"required"`
 }
 
+type UserSingIn struct {
+	ID          uint64
+	PhoneNumber string `json:"phone_number" binding:"required"`
+	Password    string `json:"password" binding:"required"`
+}
+
 type AuthRepo interface {
 	CreateUser(ctx context.Context, user UserSingUp) error
+	CheckUserByPhoneNumber(ctx context.Context, email string) (*UserSingIn, error)
 }
 type AuthService struct {
 	AuthRepo
 	salt string
+	cfg  *config.Config
 }
 
-func NewAuthSevice(postgres AuthRepo, salt string) *AuthService {
-	return &AuthService{postgres, salt}
+func NewAuthSevice(postgres AuthRepo, salt string, cfg *config.Config) *AuthService {
+	return &AuthService{postgres, salt, cfg}
 }
 
 func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
@@ -51,4 +63,28 @@ func (s *AuthService) generateHash(password string) (string, error) {
 		return "", fmt.Errorf("write failed: %w", err)
 	}
 	return string(hash.Sum([]byte(s.salt))), nil
+}
+
+func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, error) {
+	userDB, err := s.CheckUserByPhoneNumber(ctx, user.PhoneNumber)
+	if err != nil {
+		return nil, fmt.Errorf("check user by email failed %w", err)
+	}
+
+	hash := sha1.New()
+	_, err = hash.Write([]byte(user.Password))
+	if err != nil {
+		return nil, fmt.Errorf("write failed: %w", err)
+	}
+
+	if userDB.Password != string(hash.Sum([]byte(s.salt))) {
+		return nil, ErrIncorrectPassword
+	}
+
+	token, err := NewToken(userDB.ID, s.cfg)
+	if err != nil {
+		return nil, fmt.Errorf("new token failed: %w", err)
+	}
+
+	return token, nil
 }

@@ -29,8 +29,8 @@ func Run() error {
 		return fmt.Errorf("migrate up failed: %w", err)
 	}
 
-	service := service.New(db, cfg.SALT)
-	handler := handler.New(service)
+	service := service.New(db, cfg.SALT, cfg)
+	handler := handler.New(service, cfg)
 	server := new(server.Server)
 	if err := server.Run(handler.InitRouters(), cfg); err != nil {
 		return fmt.Errorf("server run failed: %w", err)
