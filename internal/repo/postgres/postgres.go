@@ -32,11 +32,6 @@ func New(cfg *config.Config) (*Postgres, error) {
 		return nil, fmt.Errorf("ping failed: %w", err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("ping failed: %w", err)
-	}
-
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("with instance failed: %w", err)
@@ -75,24 +70,23 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 	return nil
 }
 
-func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, email string) (*service.UserSingIn, uint64, error) {
+func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, phone_number string) (*service.UserSingIn, uint64, error) {
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	row, err := p.db.QueryContext(queryCtx, "SELECT id, phone_number, password FROM users WHERE phone_number = $1", email)
+	row := p.db.QueryRowContext(queryCtx, "SELECT id, phone_number, password FROM users WHERE phone_number = $1", phone_number)
+
+	var id uint64
+	var user service.UserSingIn
+
+	err := row.Scan(&id, &user.PhoneNumber, &user.Password)
 	if err != nil {
-		return nil, 0, fmt.Errorf("query failed: %w", err)
-	}
-
-	if row.Next() {
-		var id uint64
-		var user service.UserSingIn
-		err := row.Scan(&id, &user.PhoneNumber, &user.Password)
-		if err != nil {
-			return nil, 0, fmt.Errorf("scan failed: %w", err)
+		if err == sql.ErrNoRows {
+			return nil, 0, service.ErrUserDoesNotExists
 		}
-		return &user, id, nil
+
+		return nil, 0, fmt.Errorf("scan failed: %w", err)
 	}
 
-	return nil, 0, service.ErrUserDoesNotExists
+	return &user, id, nil
 }
