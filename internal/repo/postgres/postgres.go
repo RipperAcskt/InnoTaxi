@@ -16,6 +16,12 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+type transferUser struct {
+	Name        *string
+	PhoneNumber *string
+	Email       *string
+}
+
 type Postgres struct {
 	db      *sql.DB
 	Migrate *migrate.Migrate
@@ -26,11 +32,6 @@ func New(cfg *config.Config) (*Postgres, error) {
 	db, err := sql.Open("pgx", cfg.GetDBUrl())
 	if err != nil {
 		return nil, fmt.Errorf("open failed: %w", err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("ping failed: %w", err)
 	}
 
 	err = db.Ping()
@@ -117,7 +118,18 @@ func (p *Postgres) UpdateUserById(ctx context.Context, user *model.User) error {
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", user.Name, user.PhoneNumber, user.Email, user.UserID)
+	var transfer transferUser
+	if user.Name != "" {
+		transfer.Name = &user.Name
+	}
+	if user.PhoneNumber != "" {
+		transfer.PhoneNumber = &user.PhoneNumber
+	}
+	if user.Email != "" {
+		transfer.Email = &user.Email
+	}
+
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", transfer.Name, transfer.PhoneNumber, transfer.Email, user.UserID)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}
