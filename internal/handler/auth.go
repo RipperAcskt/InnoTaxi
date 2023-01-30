@@ -13,6 +13,14 @@ import (
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
+// SingUp gosoc
+// @Summary registarte user
+// @Tags auth
+// @Accept json
+// @Success 200
+// @Failure 400
+// @Failure 500
+// @Router /users/auth/sing-up [POST]
 func (h *Handler) singUp(c *gin.Context) {
 	var user service.UserSingUp
 

@@ -1,0 +1,26 @@
+basePath: /
+host: localhost:8080
+info:
+  contact:
+    email: ripper@gmail.com
+    name: API Support
+  description: API for order taxi
+  termsOfService: http://swagger.io/terms/
+  title: InnoTaxi API
+  version: "1.0"
+paths:
+  /users/auth/sing-up:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      summary: registarte user
+      tags:
+      - auth
+swagger: "2.0"
