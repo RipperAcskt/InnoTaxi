@@ -25,7 +25,5 @@ func (h *Handler) InitRouters() *gin.Engine {
 	auth.POST("sing-in", h.singIn)
 	auth.GET("refresh", h.Refresh)
 	auth.GET("logout", h.VerifyToken(), h.Logout)
-
-	users.GET("/test/:id", h.VerifyToken(), h.Test)
 	return router
 }

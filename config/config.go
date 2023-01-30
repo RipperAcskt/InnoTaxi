@@ -7,11 +7,11 @@ import (
 )
 
 type Config struct {
-	DB_USERNAME      string `mapstructure:"DB_USERNAME"`
-	DB_PASSWORD      string `mapstructure:"DB_PASSWORD"`
-	POSTGRES_DB_HOST string `mapstructure:"POSTGRES_DB_HOST"`
-	DB_NAME          string `mapstructure:"DB_NAME"`
-	MIGRATE_PATH     string `mapstructure:"MIGRATE_PATH"`
+	DB_USERNAME          string `mapstructure:"DB_USERNAME"`
+	POSTGRES_DB_PASSWORD string `mapstructure:"DB_PASSWORD"`
+	POSTGRES_DB_HOST     string `mapstructure:"POSTGRES_DB_HOST"`
+	DB_NAME              string `mapstructure:"DB_NAME"`
+	MIGRATE_PATH         string `mapstructure:"MIGRATE_PATH"`
 
 	SERVER_HOST string `mapstructure:"SERVER_HOST"`
 
@@ -21,7 +21,8 @@ type Config struct {
 	REFRESH_TOKEN_EXP int    `mapstructure:"REFRESH_TOKEN_EXP"`
 	HS256_SECRET      string `mapstructure:"HS256_SECRET"`
 
-	REDIS_DB_HOST string `mapstructure:"REDIS_DB_HOST"`
+	REDIS_DB_HOST     string `mapstructure:"REDIS_DB_HOST"`
+	REDIS_DB_PASSWORD string `mapstructure:"REDIS_DB_PASSWORD"`
 }
 
 func New() (*Config, error) {
@@ -45,5 +46,5 @@ func New() (*Config, error) {
 }
 
 func (c *Config) GetDBUrl() string {
-	return fmt.Sprintf("postgres://%s:%s@%s/%s", c.DB_USERNAME, c.DB_PASSWORD, c.POSTGRES_DB_HOST, c.DB_NAME)
+	return fmt.Sprintf("postgres://%s:%s@%s/%s", c.DB_USERNAME, c.POSTGRES_DB_PASSWORD, c.POSTGRES_DB_HOST, c.DB_NAME)
 }

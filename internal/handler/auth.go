@@ -95,7 +95,7 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 		}
 
 		if !h.s.CheckToken(accessToken) {
-			c.AbortWithStatus(403)
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -168,5 +168,5 @@ func (h *Handler) Logout(c *gin.Context) {
 		return
 	}
 	c.SetCookie("refresh_token", "", time.Now().Second(), "/users/auth", "", false, true)
-	c.Status(200)
+	c.Status(http.StatusOK)
 }
