@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(30) NOT NULL,
     password BYTEA NOT NULL,
     raiting FLOAT(8) NOT NULL,
-    deleted BOOLEAN NOT NULL
+    status INTEGER NOT NULL
 );
