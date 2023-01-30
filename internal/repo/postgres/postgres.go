@@ -64,7 +64,7 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 
 	}
 
-	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 0.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
+	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting, status) VALUES($1, $2, $3, $4, 0.0, 0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
 	if err != nil {
 		return fmt.Errorf("exec failed: %w", err)
 	}

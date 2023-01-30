@@ -1,9 +1,9 @@
 package model
 
 type User struct {
-	UserID      uint64
-	Name        string
-	PhoneNumber string
-	Email       string
-	Raiting     float64
+	UserID      uint64  `json:"-"`
+	Name        string  `json:"name"`
+	PhoneNumber string  `json:"phone_number"`
+	Email       string  `json:"naemailme"`
+	Raiting     float64 `json:"raiting"`
 }
