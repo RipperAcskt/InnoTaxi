@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/gin-gonic/gin"
@@ -33,8 +34,15 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		})
 		return
 	}
+	user_id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+	}
 
-	err := h.s.UpdateProfile(c.Request.Context(), c.Param("id"), &user)
+	user.UserID = uint64(user_id)
+	err = h.s.UpdateProfile(c.Request.Context(), &user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -42,5 +50,5 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	c.Status(200)
+	c.Status(http.StatusOK)
 }

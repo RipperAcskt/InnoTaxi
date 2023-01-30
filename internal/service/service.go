@@ -17,7 +17,7 @@ type Repo interface {
 }
 type UserRepo interface {
 	GetUserById(ctx context.Context, id string) (*model.User, error)
-	UpdateUserById(ctx context.Context, id string, user *model.User) error
+	UpdateUserById(ctx context.Context, user *model.User) error
 }
 type UserService struct {
 	UserRepo
@@ -38,6 +38,6 @@ func (user *UserService) GetProfile(ctx context.Context, id string) (*model.User
 	return user.GetUserById(ctx, id)
 }
 
-func (user *UserService) UpdateProfile(ctx context.Context, id string, userUpdate *model.User) error {
-	return user.UpdateUserById(ctx, id, userUpdate)
+func (user *UserService) UpdateProfile(ctx context.Context, userUpdate *model.User) error {
+	return user.UpdateUserById(ctx, userUpdate)
 }
