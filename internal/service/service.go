@@ -26,11 +26,11 @@ type UserService struct {
 func New(postgres Repo, salt string, cfg *config.Config) *Service {
 	return &Service{
 		AuthService: NewAuthSevice(postgres, salt, cfg),
-		UserService: newUserService(postgres),
+		UserService: NewUserService(postgres),
 	}
 }
 
-func newUserService(postgres UserRepo) *UserService {
+func NewUserService(postgres UserRepo) *UserService {
 	return &UserService{postgres}
 }
 
