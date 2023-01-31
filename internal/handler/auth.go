@@ -158,7 +158,14 @@ func (h *Handler) Refresh(c *gin.Context) {
 }
 
 func (h *Handler) Logout(c *gin.Context) {
-	id, _ := c.Get("id")
+	id, ok := c.Get("id")
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "can't get id",
+		})
+		return
+	}
+
 	exp := time.Duration(h.cfg.ACCESS_TOKEN_EXP) * time.Minute
 	err := h.s.Logout(id.(string), strings.Split(c.GetHeader("Authorization"), " ")[1], exp)
 	if err != nil {
