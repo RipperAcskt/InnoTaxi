@@ -36,6 +36,27 @@ info:
   title: InnoTaxi API
   version: "1.0"
 paths:
+  /users/auth/refresh:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: refresh access token
+      tags:
+      - auth
   /users/auth/sing-in:
     post:
       consumes:
@@ -54,13 +75,13 @@ paths:
           description: OK
           schema:
             type: string
-        "400":
-          description: Bad Request
+        "403":
+          description: Forbidden
           schema: {}
         "500":
           description: Internal Server Error
           schema: {}
-      summary: authorizate user
+      summary: user authentication
       tags:
       - auth
   /users/auth/sing-up:
@@ -86,4 +107,9 @@ paths:
       summary: registarte user
       tags:
       - auth
+securityDefinitions:
+  ApiKeyAuth:
+    in: cookie
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

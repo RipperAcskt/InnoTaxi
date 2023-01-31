@@ -13,7 +13,6 @@ import (
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
-// SingUp SingUp
 // @Summary registarte user
 // @Tags auth
 // @Param user body service.UserSingUp true "account info"
@@ -48,15 +47,13 @@ func (h *Handler) singUp(c *gin.Context) {
 	}
 }
 
-// SingUp SingIn
-// @Summary authorizate user
+// @Summary user authentication
 // @Tags auth
 // @Param input body service.UserSingIn true "phone number and password"
 // @Accept json
 // @Produce json
 // @Success 200 {object} string
-// @Success 200 {object} string
-// @Failure 400 {object} error
+// @Failure 403 {object} error
 // @Failure 500 {object} error
 // @Router /users/auth/sing-in [POST]
 func (h *Handler) singIn(c *gin.Context) {
@@ -120,9 +117,19 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
+// @Summary refresh access token
+// @Tags auth
+// @Produce json
+// @Header  200  {string}  Location  "/entity/1"
+// @Success 200 {object} string
+// @Failure 401 {object} error
+// @Failure 403 {object} error
+// @Failure 500 {object} error
+// @Router /users/auth/refresh [POST]
 func (h *Handler) Refresh(c *gin.Context) {
+	fmt.Println(c.Request.Header)
 	refresh, err := c.Cookie("refresh_token")
-
+	fmt.Println(refresh)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{

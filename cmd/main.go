@@ -17,6 +17,9 @@ import (
 // @host      localhost:8080
 // @BasePath  /
 
+// @securityDefinitions.apikey ApiKeyAuth
+// @in cookie
+// @name Authorization
 func main() {
 	if err := app.Run(); err != nil {
 		log.Fatalf("app run failed: %v", err)

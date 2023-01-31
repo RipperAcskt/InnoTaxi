@@ -19,6 +19,37 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/users/auth/refresh": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "refresh access token",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/users/auth/sing-in": {
             "post": {
                 "consumes": [
@@ -30,7 +61,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "authorizate user",
+                "summary": "user authentication",
                 "parameters": [
                     {
                         "description": "phone number and password",
@@ -49,8 +80,8 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {}
                     },
                     "500": {
@@ -134,6 +165,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "cookie"
         }
     }
 }`
