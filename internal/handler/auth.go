@@ -90,7 +90,14 @@ func (h *Handler) singIn(c *gin.Context) {
 
 func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accessToken := strings.Split(c.GetHeader("Authorization"), " ")[1]
+		token := strings.Split(c.GetHeader("Authorization"), " ")
+		if len(token) < 2 {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": fmt.Errorf("access token required").Error(),
+			})
+			return
+		}
+		accessToken := token[1]
 
 		ok, id, err := service.Verify(accessToken, cfg)
 		if err != nil {
@@ -127,9 +134,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 // @Failure 500 {object} error
 // @Router /users/auth/refresh [POST]
 func (h *Handler) Refresh(c *gin.Context) {
-	fmt.Println(c.Request.Header)
 	refresh, err := c.Cookie("refresh_token")
-	fmt.Println(refresh)
 	if err != nil {
 		if err == http.ErrNoCookie {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{

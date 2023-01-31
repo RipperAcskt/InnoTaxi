@@ -1,17 +1,28 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/gin-gonic/gin"
 )
 
+// @Summary get user profile
+// @Tags user
+// @Param id path int true "user's id"
+// @Produce json
+// @Success 200 {object} model.User
+// @Failure 401 {object} error
+// @Failure 403 {object} error
+// @Failure 500 {object} error
+// @Router /users/profile/{id} [GET]
+// @Security Bearer
 func (h *Handler) GetProfile(c *gin.Context) {
 	user, err := h.s.GetProfile(c.Request.Context(), c.Param("id"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": fmt.Errorf("get profile failed: %w", err).Error(),
 		})
 		return
 	}
@@ -19,6 +30,17 @@ func (h *Handler) GetProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// @Summary update user profile
+// @Tags user
+// @Param input body model.User false "rows to update"
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.User
+// @Failure 401 {object} error
+// @Failure 403 {object} error
+// @Failure 500 {object} error
+// @Router /users/profile/{id} [PUT]
+// @Security Bearer
 func (h *Handler) UpdateProfile(c *gin.Context) {
 	var user model.User
 
@@ -40,6 +62,16 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	c.Status(200)
 }
 
+// @Summary delete user
+// @Tags user
+// @Param id path int false "user's id to delete"
+// @Accept json
+// @Success 200
+// @Failure 401 {object} error
+// @Failure 403 {object} error
+// @Failure 500 {object} error
+// @Router /users/profile/{id} [DELETE]
+// @Security Bearer
 func (h *Handler) DeleteUser(c *gin.Context) {
 	err := h.s.DeleteUser(c.Request.Context(), c.Param("id"))
 	if err != nil {

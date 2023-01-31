@@ -1,5 +1,18 @@
 basePath: /
 definitions:
+  model.User:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      raiting:
+        type: number
+      status:
+        type: string
+    type: object
   service.UserSingIn:
     properties:
       password:
@@ -107,9 +120,93 @@ paths:
       summary: registarte user
       tags:
       - auth
+  /users/profile/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: user's id to delete
+        in: path
+        name: id
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - Bearer: []
+      summary: delete user
+      tags:
+      - user
+    get:
+      parameters:
+      - description: user's id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - Bearer: []
+      summary: get user profile
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: rows to update
+        in: body
+        name: input
+        schema:
+          $ref: '#/definitions/model.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "401":
+          description: Unauthorized
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - Bearer: []
+      summary: update user profile
+      tags:
+      - user
 securityDefinitions:
-  ApiKeyAuth:
-    in: cookie
+  Bearer:
+    in: header
     name: Authorization
     type: apiKey
 swagger: "2.0"

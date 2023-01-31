@@ -17,8 +17,8 @@ import (
 // @host      localhost:8080
 // @BasePath  /
 
-// @securityDefinitions.apikey ApiKeyAuth
-// @in cookie
+// @securityDefinitions.apikey Bearer
+// @in header
 // @name Authorization
 func main() {
 	if err := app.Run(); err != nil {

@@ -11,5 +11,5 @@ type User struct {
 	PhoneNumber *string `json:"phone_number"`
 	Email       *string `json:"email"`
 	Raiting     float64 `json:"raiting"`
-	Status      string
+	Status      string  `json:"-"`
 }
