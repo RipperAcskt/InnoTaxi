@@ -22,7 +22,7 @@ type UserSingUp struct {
 }
 
 type UserSingIn struct {
-	ID          uint64
+	ID          uint64 `json:"-"`
 	PhoneNumber string `json:"phone_number" binding:"required"`
 	Password    string `json:"password" binding:"required"`
 }

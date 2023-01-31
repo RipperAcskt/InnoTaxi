@@ -1,4 +1,31 @@
 basePath: /
+definitions:
+  service.UserSingIn:
+    properties:
+      password:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - password
+    - phone_number
+    type: object
+  service.UserSingUp:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - phone_number
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -9,17 +36,53 @@ info:
   title: InnoTaxi API
   version: "1.0"
 paths:
-  /users/auth/sing-up:
+  /users/auth/sing-in:
     post:
+      consumes:
+      - application/json
+      parameters:
+      - description: phone number and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/service.UserSingIn'
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            type: string
         "400":
           description: Bad Request
+          schema: {}
         "500":
           description: Internal Server Error
+          schema: {}
+      summary: authorizate user
+      tags:
+      - auth
+  /users/auth/sing-up:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: account info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/service.UserSingUp'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
       summary: registarte user
       tags:
       - auth
