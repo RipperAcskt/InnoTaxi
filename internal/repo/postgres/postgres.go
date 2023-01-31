@@ -59,13 +59,13 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 	defer cancel()
 
 	var name string
-	err := p.db.QueryRowContext(queryCtx, "SELECT name FROM users WHERE (phone_number = $1 OR email = $2) AND status = 0", user.PhoneNumber, user.Email).Scan(&name)
+	err := p.db.QueryRowContext(queryCtx, "SELECT name FROM users WHERE (phone_number = $1 OR email = $2) AND status = $3", user.PhoneNumber, user.Email, model.StatusCreated).Scan(&name)
 	if err == nil {
 		return fmt.Errorf("user: %v: %w", user.Name, service.ErrUserAlreadyExists)
 
 	}
 
-	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting, status) VALUES($1, $2, $3, $4, 4.0, 0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
+	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting, status) VALUES($1, $2, $3, $4, 0.0, $5)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password), model.StatusCreated)
 	if err != nil {
 		return fmt.Errorf("exec failed: %w", err)
 	}
@@ -76,7 +76,7 @@ func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, phone_number stri
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	row := p.db.QueryRowContext(queryCtx, "SELECT id, phone_number, password FROM users WHERE phone_number = $1 AND status = 0", phone_number)
+	row := p.db.QueryRowContext(queryCtx, "SELECT id, phone_number, password FROM users WHERE phone_number = $1 AND status = $2", phone_number, model.StatusCreated)
 
 	var user service.UserSingIn
 
@@ -112,7 +112,7 @@ func (p *Postgres) UpdateUserById(ctx context.Context, id string, user *model.Us
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4 AND status = 0", user.Name, user.PhoneNumber, user.Email, id)
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4 AND status = $5", user.Name, user.PhoneNumber, user.Email, id, model.StatusCreated)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}
@@ -131,7 +131,7 @@ func (p *Postgres) DeleteUserById(ctx context.Context, id string) error {
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET status = 1 WHERE id = $1 AND status = 0", id)
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET status = $1 WHERE id = $2 AND status = $3", model.StatusDeleted, id, model.StatusCreated)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}
