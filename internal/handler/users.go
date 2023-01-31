@@ -36,7 +36,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		})
 	}
 
-	user.UserID = uint64(user_id)
+	user.ID = uint64(user_id)
 	err = h.s.UpdateProfile(c.Request.Context(), &user)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{

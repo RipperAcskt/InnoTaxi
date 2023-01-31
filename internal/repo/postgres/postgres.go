@@ -17,9 +17,11 @@ import (
 )
 
 type transferUser struct {
+	ID          uint64
 	Name        *string
 	PhoneNumber *string
 	Email       *string
+	Raiting     float64
 }
 
 type Postgres struct {
@@ -128,7 +130,7 @@ func (p *Postgres) UpdateUserById(ctx context.Context, user *model.User) error {
 		transfer.Email = &user.Email
 	}
 
-	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = $1, phone_number = $2, email = $3 WHERE id = $4", transfer.Name, transfer.PhoneNumber, transfer.Email, user.UserID)
+	res, err := p.db.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", transfer.Name, transfer.PhoneNumber, transfer.Email, user.ID)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}
