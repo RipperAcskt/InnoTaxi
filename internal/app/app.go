@@ -9,9 +9,9 @@ import (
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
 	"github.com/RipperAcskt/innotaxi/internal/server"
 	"github.com/RipperAcskt/innotaxi/internal/service"
-	"github.com/sirupsen/logrus"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/sirupsen/logrus"
 )
 
 func Run(log *logrus.Logger, cfg *config.Config) error {
