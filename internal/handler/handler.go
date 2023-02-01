@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -15,10 +16,11 @@ import (
 type Handler struct {
 	s   *service.Service
 	cfg *config.Config
+	log *logrus.Logger
 }
 
-func New(s *service.Service, cfg *config.Config) *Handler {
-	return &Handler{s, cfg}
+func New(s *service.Service, cfg *config.Config, log *logrus.Logger) *Handler {
+	return &Handler{s, cfg, log}
 }
 
 func (h *Handler) InitRouters() *gin.Engine {

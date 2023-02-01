@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
-
 	"github.com/RipperAcskt/innotaxi/internal/app"
+
+	"github.com/sirupsen/logrus"
 )
 
 // @title InnoTaxi API
@@ -21,7 +21,9 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	if err := app.Run(); err != nil {
+	log := logrus.New()
+
+	if err := app.Run(log); err != nil {
 		log.Fatalf("app run failed: %v", err)
 	}
 }

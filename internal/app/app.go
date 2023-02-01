@@ -9,11 +9,12 @@ import (
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
 	"github.com/RipperAcskt/innotaxi/internal/server"
 	"github.com/RipperAcskt/innotaxi/internal/service"
+	"github.com/sirupsen/logrus"
 
 	"github.com/golang-migrate/migrate/v4"
 )
 
-func Run() error {
+func Run(log *logrus.Logger) error {
 	cfg, err := config.New()
 	if err != nil {
 		return fmt.Errorf("config new failed: %w", err)
@@ -37,7 +38,7 @@ func Run() error {
 	defer redis.Close()
 
 	service := service.New(postgres, redis, cfg.SALT, cfg)
-	handler := handler.New(service, cfg)
+	handler := handler.New(service, cfg, log)
 	server := new(server.Server)
 	if err := server.Run(handler.InitRouters(), cfg); err != nil {
 		return fmt.Errorf("server run failed: %w", err)

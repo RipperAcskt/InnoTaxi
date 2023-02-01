@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
@@ -24,6 +25,13 @@ func (h *Handler) singUp(c *gin.Context) {
 	var user service.UserSingUp
 
 	if err := c.BindJSON(&user); err != nil {
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "singUp",
+			"function": "BindJSON",
+			"error":    err,
+			"status":   http.StatusBadRequest,
+		}).Warning("bind json failed")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -33,12 +41,26 @@ func (h *Handler) singUp(c *gin.Context) {
 	err := h.s.SingUp(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserAlreadyExists) {
+			h.log.WithFields(logrus.Fields{
+				"package":  "handler",
+				"method":   "singUp",
+				"function": "h.s.SingUp",
+				"error":    err,
+				"status":   http.StatusBadRequest,
+			}).Warning("service sing up failed")
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
 
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "singUp",
+			"function": "h.s.SingUp",
+			"error":    err,
+			"status":   http.StatusInternalServerError,
+		}).Error("service sing up failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -59,6 +81,12 @@ func (h *Handler) singIn(c *gin.Context) {
 	var user service.UserSingIn
 
 	if err := c.BindJSON(&user); err != nil {
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "singIp",
+			"function": "BindJSON",
+			"error":    err,
+		}).Warning("bind json failed")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -68,12 +96,24 @@ func (h *Handler) singIn(c *gin.Context) {
 	token, err := h.s.SingIn(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserDoesNotExists) || errors.Is(err, service.ErrIncorrectPassword) {
+			h.log.WithFields(logrus.Fields{
+				"package":  "handler",
+				"method":   "singIp",
+				"function": "h.s.SingIp",
+				"error":    err,
+			}).Warning("service sing in failed")
 			c.JSON(http.StatusForbidden, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
 
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "singIp",
+			"function": "h.s.SingIn",
+			"error":    err,
+		}).Error("service sing in failed")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -91,6 +131,12 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := strings.Split(c.GetHeader("Authorization"), " ")
 		if len(token) < 2 {
+			h.log.WithFields(logrus.Fields{
+				"package":  "handler",
+				"method":   "VerifyToken",
+				"function": "len",
+				"error":    "can't get access token",
+			}).Warning("access token required")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": fmt.Errorf("access token required").Error(),
 			})
@@ -101,17 +147,36 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 		ok, id, err := service.Verify(accessToken, h.cfg)
 		if err != nil {
 			if errors.Is(err, service.ErrTokenExpired) {
+				h.log.WithFields(logrus.Fields{
+					"package":  "handler",
+					"method":   "VerifyToken",
+					"function": "service.Verify",
+					"error":    err,
+				}).Warning("service sing in failed")
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 					"error": err.Error(),
 				})
 				return
 			}
+
+			h.log.WithFields(logrus.Fields{
+				"package":  "handler",
+				"method":   "VerifyToken",
+				"function": "service.Verify",
+				"error":    err,
+			}).Error("service verify failed")
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Errorf("verify failed: %w", err).Error(),
 			})
 			return
 		}
 		if !ok {
+			h.log.WithFields(logrus.Fields{
+				"package":  "handler",
+				"method":   "VerifyToken",
+				"function": "service.Verify",
+				"error":    "bad access token",
+			}).Warning("service verify failed")
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": fmt.Errorf("wrong signature").Error(),
 			})
@@ -119,11 +184,22 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 		}
 
 		if !h.s.CheckToken(accessToken) {
+			h.log.WithFields(logrus.Fields{
+				"package":  "handler",
+				"method":   "VerifyToken",
+				"function": "h.s.CheckToken",
+				"error":    "user logouted",
+			}).Warning("service check token failed")
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
 		if fmt.Sprint(id) != c.Param("id") {
+			h.log.WithFields(logrus.Fields{
+				"package": "handler",
+				"method":  "VerifyToken",
+				"error":   "identifiers do not equel",
+			}).Warning("compare identifiers failed")
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
