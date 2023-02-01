@@ -10,8 +10,6 @@ definitions:
         type: string
       raiting:
         type: number
-      status:
-        type: string
     type: object
   service.UserSingIn:
     properties:
@@ -49,23 +47,49 @@ info:
   title: InnoTaxi API
   version: "1.0"
 paths:
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: user's id to delete
+        in: path
+        name: id
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: 'error: err'
+          schema: {}
+        "403":
+          description: 'error: err'
+          schema: {}
+        "500":
+          description: 'error: err'
+          schema: {}
+      security:
+      - Bearer: []
+      summary: delete user
+      tags:
+      - user
   /users/auth/refresh:
     post:
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'accept token: token'
           schema:
             type: string
         "401":
-          description: Unauthorized
+          description: 'error: err'
           schema: {}
         "403":
-          description: Forbidden
+          description: 'error: err'
           schema: {}
         "500":
-          description: Internal Server Error
+          description: 'error: err'
           schema: {}
       summary: refresh access token
       tags:
@@ -85,14 +109,14 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'access_token: token'
           schema:
             type: string
         "403":
-          description: Forbidden
+          description: 'error: err'
           schema: {}
         "500":
-          description: Internal Server Error
+          description: 'error: err'
           schema: {}
       summary: user authentication
       tags:
@@ -112,40 +136,15 @@ paths:
         "200":
           description: OK
         "400":
-          description: Bad Request
+          description: 'error: err'
           schema: {}
         "500":
-          description: Internal Server Error
+          description: 'error: err'
           schema: {}
-      summary: registarte user
+      summary: registrate user
       tags:
       - auth
   /users/profile/{id}:
-    delete:
-      consumes:
-      - application/json
-      parameters:
-      - description: user's id to delete
-        in: path
-        name: id
-        type: integer
-      responses:
-        "200":
-          description: OK
-        "401":
-          description: Unauthorized
-          schema: {}
-        "403":
-          description: Forbidden
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      security:
-      - Bearer: []
-      summary: delete user
-      tags:
-      - user
     get:
       parameters:
       - description: user's id
@@ -161,13 +160,13 @@ paths:
           schema:
             $ref: '#/definitions/model.User'
         "401":
-          description: Unauthorized
+          description: 'error: err'
           schema: {}
         "403":
-          description: Forbidden
+          description: 'error: err'
           schema: {}
         "500":
-          description: Internal Server Error
+          description: 'error: err'
           schema: {}
       security:
       - Bearer: []
@@ -183,6 +182,11 @@ paths:
         name: input
         schema:
           $ref: '#/definitions/model.User'
+      - description: user's id
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -191,13 +195,13 @@ paths:
           schema:
             $ref: '#/definitions/model.User'
         "401":
-          description: Unauthorized
+          description: 'error: err'
           schema: {}
         "403":
-          description: Forbidden
+          description: 'error: err'
           schema: {}
         "500":
-          description: Internal Server Error
+          description: 'error: err'
           schema: {}
       security:
       - Bearer: []

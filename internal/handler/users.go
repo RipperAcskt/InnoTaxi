@@ -13,9 +13,9 @@ import (
 // @Param id path int true "user's id"
 // @Produce json
 // @Success 200 {object} model.User
-// @Failure 401 {object} error
-// @Failure 403 {object} error
-// @Failure 500 {object} error
+// @Failure 401 {object} error "error: err"
+// @Failure 403 {object} error "error: err"
+// @Failure 500 {object} error "error: err"
 // @Router /users/profile/{id} [GET]
 // @Security Bearer
 func (h *Handler) GetProfile(c *gin.Context) {
@@ -33,12 +33,13 @@ func (h *Handler) GetProfile(c *gin.Context) {
 // @Summary update user profile
 // @Tags user
 // @Param input body model.User false "rows to update"
+// @Param id path int true "user's id"
 // @Accept json
 // @Produce json
 // @Success 200 {object} model.User
-// @Failure 401 {object} error
-// @Failure 403 {object} error
-// @Failure 500 {object} error
+// @Failure 401 {object} error "error: err"
+// @Failure 403 {object} error "error: err"
+// @Failure 500 {object} error "error: err"
 // @Router /users/profile/{id} [PUT]
 // @Security Bearer
 func (h *Handler) UpdateProfile(c *gin.Context) {
@@ -67,10 +68,10 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 // @Param id path int false "user's id to delete"
 // @Accept json
 // @Success 200
-// @Failure 401 {object} error
-// @Failure 403 {object} error
-// @Failure 500 {object} error
-// @Router /users/profile/{id} [DELETE]
+// @Failure 401 {object} error "error: err"
+// @Failure 403 {object} error "error: err"
+// @Failure 500 {object} error "error: err"
+// @Router /users/{id} [DELETE]
 // @Security Bearer
 func (h *Handler) DeleteUser(c *gin.Context) {
 	err := h.s.DeleteUser(c.Request.Context(), c.Param("id"))

@@ -13,13 +13,13 @@ import (
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
-// @Summary registarte user
+// @Summary registrate user
 // @Tags auth
 // @Param user body service.UserSingUp true "account info"
 // @Accept json
 // @Success 200
-// @Failure 400 {object} error
-// @Failure 500 {object} error
+// @Failure 400 {object} error "error: err"
+// @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-up [POST]
 func (h *Handler) singUp(c *gin.Context) {
 	var user service.UserSingUp
@@ -52,9 +52,9 @@ func (h *Handler) singUp(c *gin.Context) {
 // @Param input body service.UserSingIn true "phone number and password"
 // @Accept json
 // @Produce json
-// @Success 200 {object} string
-// @Failure 403 {object} error
-// @Failure 500 {object} error
+// @Success 200 {object} string "access_token: token"
+// @Failure 403 {object} error "error: err"
+// @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-in [POST]
 func (h *Handler) singIn(c *gin.Context) {
 	var user service.UserSingIn
@@ -118,7 +118,12 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 			})
 			return
 		}
-		c.Set("users_id", fmt.Sprintf("%v", id))
+
+		if fmt.Sprint(id) != c.Param("id") {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
 		c.Next()
 
 	}
@@ -127,11 +132,10 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 // @Summary refresh access token
 // @Tags auth
 // @Produce json
-// @Header  200  {string}  Location  "/entity/1"
-// @Success 200 {object} string
-// @Failure 401 {object} error
-// @Failure 403 {object} error
-// @Failure 500 {object} error
+// @Success 200 {object} string "accept token: token"
+// @Failure 401 {object} error  "error: err"
+// @Failure 403 {object} error  "error: err"
+// @Failure 500 {object} error  "error: err"
 // @Router /users/auth/refresh [POST]
 func (h *Handler) Refresh(c *gin.Context) {
 	refresh, err := c.Cookie("refresh_token")

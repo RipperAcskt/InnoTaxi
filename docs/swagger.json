@@ -24,21 +24,21 @@
                 "summary": "refresh access token",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "accept token: token",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -69,17 +69,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "access_token: token",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -93,7 +93,7 @@
                 "tags": [
                     "auth"
                 ],
-                "summary": "registarte user",
+                "summary": "registrate user",
                 "parameters": [
                     {
                         "description": "account info",
@@ -110,11 +110,11 @@
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -151,15 +151,15 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -188,6 +188,13 @@
                         "schema": {
                             "$ref": "#/definitions/model.User"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "user's id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -198,19 +205,21 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
-            },
+            }
+        },
+        "/users/{id}": {
             "delete": {
                 "security": [
                     {
@@ -237,15 +246,15 @@
                         "description": "OK"
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -267,9 +276,6 @@
                 },
                 "raiting": {
                     "type": "number"
-                },
-                "status": {
-                    "type": "string"
                 }
             }
         },

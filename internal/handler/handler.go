@@ -35,7 +35,7 @@ func (h *Handler) InitRouters() *gin.Engine {
 	auth.POST("refresh", h.Refresh)
 
 	users.GET("/profile/:id", VerifyToken(h.cfg), h.GetProfile)
-	users.PUT("/profile/:id", h.UpdateProfile)
+	users.PUT("/profile/:id", VerifyToken(h.cfg), h.UpdateProfile)
 	users.DELETE("/:id", VerifyToken(h.cfg), h.DeleteUser)
 	return router
 }

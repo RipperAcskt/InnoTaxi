@@ -30,21 +30,21 @@ const docTemplate = `{
                 "summary": "refresh access token",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "accept token: token",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -75,17 +75,17 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "access_token: token",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -99,7 +99,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "registarte user",
+                "summary": "registrate user",
                 "parameters": [
                     {
                         "description": "account info",
@@ -116,11 +116,11 @@ const docTemplate = `{
                         "description": "OK"
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -157,15 +157,15 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -194,6 +194,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.User"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "user's id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -204,19 +211,21 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
-            },
+            }
+        },
+        "/users/{id}": {
             "delete": {
                 "security": [
                     {
@@ -243,15 +252,15 @@ const docTemplate = `{
                         "description": "OK"
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "error: err",
                         "schema": {}
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "error: err",
                         "schema": {}
                     }
                 }
@@ -273,9 +282,6 @@ const docTemplate = `{
                 },
                 "raiting": {
                     "type": "number"
-                },
-                "status": {
-                    "type": "string"
                 }
             }
         },
