@@ -22,7 +22,7 @@ type UserSingUp struct {
 }
 
 type UserSingIn struct {
-	ID          uint64
+	ID          uint64 `json:"-"`
 	PhoneNumber string `json:"phone_number" binding:"required"`
 	Password    string `json:"password" binding:"required"`
 }
@@ -67,7 +67,7 @@ func (s *AuthService) generateHash(password string) (string, error) {
 func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, error) {
 	userDB, err := s.CheckUserByPhoneNumber(ctx, user.PhoneNumber)
 	if err != nil {
-		return nil, fmt.Errorf("check user by email failed %w", err)
+		return nil, fmt.Errorf("check user by phone number failed: %w", err)
 	}
 
 	hash := sha1.New()
