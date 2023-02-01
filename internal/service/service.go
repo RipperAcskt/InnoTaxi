@@ -1,13 +1,38 @@
 package service
 
-import "github.com/RipperAcskt/innotaxi/config"
+import (
+	"context"
+
+	"github.com/RipperAcskt/innotaxi/config"
+	"github.com/RipperAcskt/innotaxi/internal/model"
+)
 
 type Service struct {
 	*AuthService
+	*UserService
+}
+type Repo interface {
+	AuthRepo
+	UserRepo
+}
+type UserRepo interface {
+	GetUserById(ctx context.Context, id string) (*model.User, error)
+}
+type UserService struct {
+	UserRepo
 }
 
-func New(postgres AuthRepo, salt string, cfg *config.Config) *Service {
+func New(postgres Repo, salt string, cfg *config.Config) *Service {
 	return &Service{
 		AuthService: NewAuthSevice(postgres, salt, cfg),
+		UserService: NewUserService(postgres),
 	}
+}
+
+func NewUserService(postgres UserRepo) *UserService {
+	return &UserService{postgres}
+}
+
+func (user *UserService) GetProfile(ctx context.Context, id string) (*model.User, error) {
+	return user.GetUserById(ctx, id)
 }

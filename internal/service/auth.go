@@ -52,7 +52,6 @@ func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

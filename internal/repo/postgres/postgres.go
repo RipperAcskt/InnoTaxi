@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/RipperAcskt/innotaxi/config"
+	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -63,7 +64,7 @@ func (p *Postgres) CreateUser(ctx context.Context, user service.UserSingUp) erro
 
 	}
 
-	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting) VALUES($1, $2, $3, $4, 0.0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
+	_, err = p.db.ExecContext(ctx, "INSERT INTO users (name, phone_number, email, password, raiting, status) VALUES($1, $2, $3, $4, 0.0, 0)", user.Name, user.PhoneNumber, user.Email, []byte(user.Password))
 	if err != nil {
 		return fmt.Errorf("exec failed: %w", err)
 	}
@@ -88,4 +89,20 @@ func (p *Postgres) CheckUserByPhoneNumber(ctx context.Context, phone_number stri
 	}
 
 	return &user, nil
+}
+
+func (p *Postgres) GetUserById(ctx context.Context, id string) (*model.User, error) {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	user := &model.User{}
+	err := p.db.QueryRowContext(queryCtx, "SELECT id, name, phone_number, email, raiting FROM users WHERE id = $1", id).Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.Email, &user.Raiting)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, service.ErrUserDoesNotExists
+		}
+		return nil, fmt.Errorf("query row context failed: %w", err)
+	}
+
+	return user, err
 }
