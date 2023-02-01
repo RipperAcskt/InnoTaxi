@@ -14,11 +14,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 )
 
-func Run(log *logrus.Logger) error {
-	cfg, err := config.New()
-	if err != nil {
-		return fmt.Errorf("config new failed: %w", err)
-	}
+func Run(log *logrus.Logger, cfg *config.Config) error {
 
 	postgres, err := postgres.New(cfg)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // @Summary get user profile
@@ -21,6 +22,13 @@ import (
 func (h *Handler) GetProfile(c *gin.Context) {
 	user, err := h.s.GetProfile(c.Request.Context(), c.Param("id"))
 	if err != nil {
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "GetProfile",
+			"function": "h.s.GetProfile",
+			"error":    err,
+			"id":       c.Param("id"),
+		}).Error("get profile failed")
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("get profile failed: %w", err).Error(),
 		})
@@ -46,6 +54,12 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	var user model.User
 
 	if err := c.BindJSON(&user); err != nil {
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "UpdateProfile",
+			"function": "c.BindJSON",
+			"error":    err,
+		}).Warning("bind JSON failed")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -54,6 +68,14 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 
 	err := h.s.UpdateProfile(c.Request.Context(), c.Param("id"), &user)
 	if err != nil {
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "UpdateProfile",
+			"function": "h.s.UpdateProfile",
+			"error":    err,
+			"id":       c.Param("id"),
+			"user":     user,
+		}).Error("update profile failed")
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -76,6 +98,13 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 func (h *Handler) DeleteUser(c *gin.Context) {
 	err := h.s.DeleteUser(c.Request.Context(), c.Param("id"))
 	if err != nil {
+		h.log.WithFields(logrus.Fields{
+			"package":  "handler",
+			"method":   "DeleteUser",
+			"function": "h.s.UpdDeleteUserateProfile",
+			"error":    err,
+			"id":       c.Param("id"),
+		}).Error("delete user failed")
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
