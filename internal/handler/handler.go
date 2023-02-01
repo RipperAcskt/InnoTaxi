@@ -32,12 +32,12 @@ func (h *Handler) InitRouters() *gin.Engine {
 	auth := users.Group("/auth")
 	auth.POST("sing-up", h.singUp)
 	auth.POST("sing-in", h.singIn)
-	auth.POST("refresh", h.Refresh)
+	auth.GET("refresh", h.Refresh)
+	auth.GET("logout", h.VerifyToken(), h.Logout)
 
 	users.GET("/profile/:id", VerifyToken(h.cfg), h.GetProfile)
 	users.PUT("/profile/:id", VerifyToken(h.cfg), h.UpdateProfile)
 	users.DELETE("/:id", VerifyToken(h.cfg), h.DeleteUser)
-	auth.GET("refresh", h.Refresh)
-	auth.GET("logout", h.VerifyToken(), h.Logout)
+
 	return router
 }
