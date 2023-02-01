@@ -26,7 +26,7 @@ type UserService struct {
 
 func New(postgres Repo, redis TokenRepo, salt string, cfg *config.Config) *Service {
 	return &Service{
-		AuthService: NewAuthSevice(postgres, salt, cfg),
+		AuthService: NewAuthSevice(postgres, redis, salt, cfg),
 		UserService: NewUserService(postgres),
 	}
 }

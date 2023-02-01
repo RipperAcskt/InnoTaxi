@@ -19,8 +19,41 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/users/auth/logout": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "refresh access token",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "error: err",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "error: err",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "error: err",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/users/auth/refresh": {
-            "post": {
+            "get": {
                 "produces": [
                     "application/json"
                 ],

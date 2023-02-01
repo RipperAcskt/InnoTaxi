@@ -140,7 +140,7 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 // @Failure 401 {object} error  "error: err"
 // @Failure 403 {object} error  "error: err"
 // @Failure 500 {object} error  "error: err"
-// @Router /users/auth/refresh [POST]
+// @Router /users/auth/refresh [GET]
 func (h *Handler) Refresh(c *gin.Context) {
 	refresh, err := c.Cookie("refresh_token")
 	if err != nil {
@@ -192,6 +192,15 @@ func (h *Handler) Refresh(c *gin.Context) {
 	})
 }
 
+// @Summary refresh access token
+// @Tags auth
+// @Produce json
+// @Success 200
+// @Failure 401 {object} error  "error: err"
+// @Failure 403 {object} error  "error: err"
+// @Failure 500 {object} error  "error: err"
+// @Router /users/auth/logout [GET]
+// @Security Bearer
 func (h *Handler) Logout(c *gin.Context) {
 	id, ok := c.Get("id")
 	if !ok {
