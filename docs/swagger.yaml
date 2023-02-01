@@ -73,8 +73,29 @@ paths:
       summary: delete user
       tags:
       - user
+  /users/auth/logout:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: 'error: err'
+          schema: {}
+        "403":
+          description: 'error: err'
+          schema: {}
+        "500":
+          description: 'error: err'
+          schema: {}
+      security:
+      - Bearer: []
+      summary: refresh access token
+      tags:
+      - auth
   /users/auth/refresh:
-    post:
+    get:
       produces:
       - application/json
       responses:

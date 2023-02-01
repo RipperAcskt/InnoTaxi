@@ -6,6 +6,7 @@ import (
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/handler"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
+	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
 	"github.com/RipperAcskt/innotaxi/internal/server"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 
@@ -18,18 +19,24 @@ func Run() error {
 		return fmt.Errorf("config new failed: %w", err)
 	}
 
-	db, err := postgres.New(cfg)
+	postgres, err := postgres.New(cfg)
 	if err != nil {
 		return fmt.Errorf("postgres new failed: %w", err)
 	}
-	defer db.Close()
+	defer postgres.Close()
 
-	err = db.Migrate.Up()
+	err = postgres.Migrate.Up()
 	if err != migrate.ErrNoChange && err != nil {
 		return fmt.Errorf("migrate up failed: %w", err)
 	}
 
-	service := service.New(db, cfg.SALT, cfg)
+	redis, err := redis.New(cfg)
+	if err != nil {
+		return fmt.Errorf("redis new failed: %w", err)
+	}
+	defer redis.Close()
+
+	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg)
 	server := new(server.Server)
 	if err := server.Run(handler.InitRouters(), cfg); err != nil {

@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 )
 
@@ -88,7 +87,7 @@ func (h *Handler) singIn(c *gin.Context) {
 	})
 }
 
-func VerifyToken(cfg *config.Config) gin.HandlerFunc {
+func (h *Handler) VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := strings.Split(c.GetHeader("Authorization"), " ")
 		if len(token) < 2 {
@@ -99,7 +98,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 		}
 		accessToken := token[1]
 
-		ok, id, err := service.Verify(accessToken, cfg)
+		ok, id, err := service.Verify(accessToken, h.cfg)
 		if err != nil {
 			if errors.Is(err, service.ErrTokenExpired) {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -116,6 +115,11 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": fmt.Errorf("wrong signature").Error(),
 			})
+			return
+		}
+
+		if !h.s.CheckToken(accessToken) {
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -136,7 +140,7 @@ func VerifyToken(cfg *config.Config) gin.HandlerFunc {
 // @Failure 401 {object} error  "error: err"
 // @Failure 403 {object} error  "error: err"
 // @Failure 500 {object} error  "error: err"
-// @Router /users/auth/refresh [POST]
+// @Router /users/auth/refresh [GET]
 func (h *Handler) Refresh(c *gin.Context) {
 	refresh, err := c.Cookie("refresh_token")
 	if err != nil {
@@ -186,4 +190,34 @@ func (h *Handler) Refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token.Access,
 	})
+}
+
+// @Summary refresh access token
+// @Tags auth
+// @Produce json
+// @Success 200
+// @Failure 401 {object} error  "error: err"
+// @Failure 403 {object} error  "error: err"
+// @Failure 500 {object} error  "error: err"
+// @Router /users/auth/logout [GET]
+// @Security Bearer
+func (h *Handler) Logout(c *gin.Context) {
+	id, ok := c.Get("id")
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "can't get id",
+		})
+		return
+	}
+
+	exp := time.Duration(h.cfg.ACCESS_TOKEN_EXP) * time.Minute
+	err := h.s.Logout(id.(string), strings.Split(c.GetHeader("Authorization"), " ")[1], exp)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	c.SetCookie("refresh_token", "", time.Now().Second(), "/users/auth", "", false, true)
+	c.Status(http.StatusOK)
 }
