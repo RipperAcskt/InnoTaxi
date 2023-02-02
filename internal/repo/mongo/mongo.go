@@ -25,7 +25,7 @@ type log struct {
 	Method string
 	Uuid   string
 	Err    string
-	Time   float64
+	Time   string
 }
 
 func New(cfg *config.Config) (*Mongo, error) {
