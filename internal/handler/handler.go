@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/zap"
 
 	"github.com/RipperAcskt/innotaxi/config"
 	_ "github.com/RipperAcskt/innotaxi/docs"
@@ -16,10 +16,10 @@ import (
 type Handler struct {
 	s   *service.Service
 	cfg *config.Config
-	log *logrus.Logger
+	log *zap.Logger
 }
 
-func New(s *service.Service, cfg *config.Config, log *logrus.Logger) *Handler {
+func New(s *service.Service, cfg *config.Config, log *zap.Logger) *Handler {
 	return &Handler{s, cfg, log}
 }
 

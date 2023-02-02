@@ -97,7 +97,7 @@ func (p *Postgres) GetUserById(ctx context.Context, id string) (*model.User, err
 	defer cancel()
 
 	user := &model.User{}
-	err := p.db.QueryRowContext(queryCtx, "SELECT id, name, phone_number, email, raiting FROM users WHERE id = $1", id).Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.Email, &user.Raiting)
+	err := p.db.QueryRowContext(queryCtx, "SELECT id, name, phone_number, email, raiting FROM users WHERE id = $1 AND status = $2", id, model.StatusCreated).Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.Email, &user.Raiting)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, service.ErrUserDoesNotExists

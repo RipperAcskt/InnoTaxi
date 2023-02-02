@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -15,6 +16,16 @@ import (
 type Mongo struct {
 	client *mongo.Client
 	cfg    *config.Config
+}
+
+type log struct {
+	Level  string
+	Caller string
+	Msg    string
+	Method string
+	Uuid   string
+	Err    string
+	Time   float64
 }
 
 func New(cfg *config.Config) (*Mongo, error) {
@@ -45,15 +56,25 @@ func (m *Mongo) Close() error {
 }
 
 func (m *Mongo) Write(p []byte) (n int, err error) {
-	logs := m.client.Database("innotaxi").Collection("logs")
+	var logs log
+	err = json.Unmarshal(p, &logs)
+	if err != nil {
+		return 0, fmt.Errorf("unmarshal failed: %w", err)
+	}
+
+	logger := m.client.Database("innotaxi").Collection("logs")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := logs.InsertOne(ctx, bson.M{
-		"created": time.Now(),
-		"log":     p,
+	_, err = logger.InsertOne(ctx, bson.M{
+		"level":  logs.Level,
+		"caller": logs.Caller,
+		"msg":    logs.Msg,
+		"method": logs.Method,
+		"uuid":   logs.Uuid,
+		"error":  logs.Err,
+		"time":   logs.Time,
 	})
-	fmt.Println(err, string(p), res.InsertedID)
 	if err != nil {
 		return
 	}

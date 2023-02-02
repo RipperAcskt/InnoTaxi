@@ -26,13 +26,24 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "produces": [
+                "consumes": [
                     "application/json"
                 ],
                 "tags": [
                     "auth"
                 ],
-                "summary": "refresh access token",
+                "summary": "logout user",
+                "parameters": [
+                    {
+                        "description": "access_token: token",
+                        "name": "access_token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"

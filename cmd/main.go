@@ -1,11 +1,9 @@
 package main
 
 import (
-	"github.com/RipperAcskt/innotaxi/config"
-	"github.com/RipperAcskt/innotaxi/internal/app"
-	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
+	"log"
 
-	"github.com/sirupsen/logrus"
+	"github.com/RipperAcskt/innotaxi/internal/app"
 )
 
 // @title InnoTaxi API
@@ -23,20 +21,7 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	log := logrus.New()
-
-	cfg, err := config.New()
-	if err != nil {
-		log.Fatalf("config new failed: %w", err)
-	}
-
-	mongo, err := mongo.New(cfg)
-	if err != nil {
-		log.Fatalf("mongo new failed: %w", err)
-	}
-	log.SetOutput(mongo)
-
-	if err := app.Run(log, cfg); err != nil {
+	if err := app.Run(); err != nil {
 		log.Fatalf("app run failed: %v", err)
 	}
 }
