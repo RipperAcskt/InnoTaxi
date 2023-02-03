@@ -54,7 +54,7 @@ func newJwt(jwtExp time.Time, id uint64, cfg *config.Config) (string, error) {
 	return tokenString, nil
 }
 
-func Verify(token string, cfg *config.Config) (bool, uint64, error) {
+func Verify(token string, cfg *config.Config) (uint64, error) {
 	tokenJwt, err := jwt.Parse(
 		token,
 		func(token *jwt.Token) (interface{}, error) {
@@ -63,16 +63,16 @@ func Verify(token string, cfg *config.Config) (bool, uint64, error) {
 	)
 
 	if err != nil {
-		return false, 0, fmt.Errorf("token parse failed: %w", err)
+		return 0, fmt.Errorf("token parse failed: %w", err)
 	}
 
 	claims, ok := tokenJwt.Claims.(jwt.MapClaims)
 	if !ok {
-		return false, 0, fmt.Errorf("jwt map claims failed")
+		return 0, fmt.Errorf("jwt map claims failed")
 	}
 
 	if !claims.VerifyExpiresAt(time.Now().UTC().Unix(), true) {
-		return false, 0, ErrTokenExpired
+		return 0, ErrTokenExpired
 	}
-	return true, uint64(claims["user_id"].(float64)), nil
+	return uint64(claims["user_id"].(float64)), nil
 }

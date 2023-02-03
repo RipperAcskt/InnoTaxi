@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -51,6 +52,8 @@ func (h *Handler) singUp(c *gin.Context) {
 		})
 		return
 	}
+
+	c.Status(http.StatusCreated)
 	h.log.Info("/users/auth/sing-up", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 }
 
@@ -75,7 +78,6 @@ func (h *Handler) singIn(c *gin.Context) {
 		})
 		return
 	}
-
 	token, err := h.s.SingIn(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserDoesNotExists) || errors.Is(err, service.ErrIncorrectPassword) {
@@ -111,11 +113,17 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 		}
 		accessToken := token[1]
 
-		ok, id, err := service.Verify(accessToken, h.cfg)
+		id, err := service.Verify(accessToken, h.cfg)
 		if err != nil {
 			if errors.Is(err, service.ErrTokenExpired) {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 					"error": err.Error(),
+				})
+				return
+			}
+			if strings.Contains(err.Error(), jwt.ErrSignatureInvalid.Error()) {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+					"error": fmt.Errorf("wrong signature").Error(),
 				})
 				return
 			}
@@ -126,19 +134,13 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 			})
 			return
 		}
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": fmt.Errorf("wrong signature").Error(),
-			})
-			return
-		}
 
 		if !h.s.CheckToken(accessToken) {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
-
-		if fmt.Sprint(id) != c.Param("id") {
+		c.Set("id", fmt.Sprint(id))
+		if c.Param("id") != "" && fmt.Sprint(id) != c.Param("id") {
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
@@ -176,12 +178,19 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	ok, id, err := service.Verify(refresh, h.cfg)
+	id, err := service.Verify(refresh, h.cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrTokenExpired) {
 			h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": err.Error(),
+			})
+			return
+		}
+		if strings.Contains(err.Error(), jwt.ErrSignatureInvalid.Error()) {
+			h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": fmt.Errorf("wrong signature").Error(),
 			})
 			return
 		}
@@ -192,19 +201,12 @@ func (h *Handler) Refresh(c *gin.Context) {
 		})
 		return
 	}
-	if !ok {
-		h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"error": fmt.Errorf("wrong signature").Error(),
-		})
-		return
-	}
 
 	token, err := service.NewToken(id, h.cfg)
 	if err != nil {
-		h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"error": fmt.Errorf("wrong signature").Error(),
+		h.log.Error("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("new token failed: %w", err)), zap.String("time", time.Since(start).String()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
