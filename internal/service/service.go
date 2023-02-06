@@ -7,6 +7,9 @@ import (
 	"github.com/RipperAcskt/innotaxi/internal/model"
 )
 
+//go:generate mockgen -destination=mocks/mock_auth.go -package=mocks github.com/RipperAcskt/innotaxi/internal/service AuthRepo
+//go:generate mockgen -destination=mocks/mock_token.go -package=mocks github.com/RipperAcskt/innotaxi/internal/service TokenRepo
+//go:generate mockgen -destination=mocks/mock_user.go -package=mocks github.com/RipperAcskt/innotaxi/internal/service UserRepo
 type Service struct {
 	*AuthService
 	*UserService

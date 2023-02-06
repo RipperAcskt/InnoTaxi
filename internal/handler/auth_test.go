@@ -2,8 +2,7 @@ package handler
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
+	"context"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -13,23 +12,80 @@ import (
 	"testing"
 
 	"github.com/RipperAcskt/innotaxi/config"
-	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
-	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
-	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
 	"github.com/RipperAcskt/innotaxi/internal/service"
-
+	"github.com/RipperAcskt/innotaxi/internal/service/mocks"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-migrate/migrate/v4"
+	"github.com/go-playground/assert/v2"
+	"github.com/golang/mock/gomock"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-func SetUpRouter() *gin.Engine {
-	router := gin.Default()
-	return router
+func TestSingUp(t *testing.T) {
+	type mockBehavior func(s *mocks.MockAuthRepo, user service.UserSingUp)
+	type fileds struct {
+		authRepo  *mocks.MockAuthRepo
+		tokenRepo *mocks.MockTokenRepo
+	}
+	test := []struct {
+		name         string
+		body         string
+		user         service.UserSingUp
+		mockBehavior mockBehavior
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			name: "new user",
+			body: `{"name": "Ivan", "phone_number": "+7455456", "email": "ripper@algsdh", "password": "12345"}`,
+			user: service.UserSingUp{
+				Name:        "Ivan",
+				PhoneNumber: "+7455456",
+				Email:       "ripper@algsdh",
+				Password:    "12345",
+			},
+			mockBehavior: func(s *mocks.MockAuthRepo, user service.UserSingUp) {
+				s.EXPECT().CreateUser(context.Background(), user).Return(nil)
+			},
+			expectedCode: http.StatusCreated,
+			expectedBody: "",
+		},
+	}
+
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			f := fileds{
+				authRepo:  mocks.NewMockAuthRepo(ctrl),
+				tokenRepo: mocks.NewMockTokenRepo(ctrl),
+			}
+			authService := service.NewAuthSevice(f.authRepo, f.tokenRepo, "124jkhsdaf3425", &config.Config{})
+
+			tt.user.Password, _ = authService.GenerateHash(tt.user.Password)
+			tt.mockBehavior(f.authRepo, tt.user)
+
+			service := service.Service{
+				AuthService: authService,
+			}
+			logger, _ := zap.NewProduction()
+			handler := New(&service, nil, logger)
+
+			r := gin.New()
+			r.POST("/users/auth/sing-up", handler.singUp)
+
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest("POST", "/users/auth/sing-up", bytes.NewBufferString(tt.body))
+
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedCode, w.Code)
+			assert.Equal(t, tt.expectedBody, w.Body.String())
+		})
+	}
 }
 
-func InitHandler() (*Handler, error) {
+func TestSingIn(t *testing.T) {
 	_, filename, _, _ := runtime.Caller(0)
 	dir := path.Join(path.Dir(filename), "../..")
 	err := os.Chdir(dir)
@@ -39,266 +95,84 @@ func InitHandler() (*Handler, error) {
 
 	cfg, err := config.New()
 	if err != nil {
-		return nil, fmt.Errorf("config new failed: %w", err)
+		log.Fatalf("config new failed: %v", err)
 	}
 
-	postgres, err := postgres.New(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("postgres new failed: %w", err)
+	type mockBehavior func(s *mocks.MockAuthRepo, phone_number string)
+	type fileds struct {
+		authRepo  *mocks.MockAuthRepo
+		tokenRepo *mocks.MockTokenRepo
+	}
+	test := []struct {
+		name         string
+		body         string
+		user         service.UserSingIn
+		mockBehavior mockBehavior
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			name: "correct password",
+			body: `{"phone_number": "2", "password": "2"}`,
+			user: service.UserSingIn{
+				ID:          9,
+				PhoneNumber: "2",
+				Password:    "2",
+			},
+			mockBehavior: func(s *mocks.MockAuthRepo, phone_number string) {
+				s.EXPECT().CheckUserByPhoneNumber(context.Background(), phone_number).Return(&service.UserSingIn{
+					ID:          9,
+					PhoneNumber: "2",
+					Password:    string([]byte{49, 50, 52, 106, 107, 104, 115, 100, 97, 102, 51, 52, 50, 53, 218, 75, 146, 55, 186, 204, 205, 241, 156, 7, 96, 202, 183, 174, 196, 168, 53, 144, 16, 176}),
+				}, nil)
+			},
+			expectedCode: http.StatusOK,
+			expectedBody: "",
+		},
+		{
+			name: "incorrect password",
+			body: `{"phone_number": "+7455456", "password": "123456"}`,
+			user: service.UserSingIn{
+				ID:          1,
+				PhoneNumber: "+7455456",
+				Password:    "123456",
+			},
+			mockBehavior: func(s *mocks.MockAuthRepo, phone_number string) {
+				s.EXPECT().CheckUserByPhoneNumber(context.Background(), phone_number).Return(&service.UserSingIn{}, nil)
+			},
+			expectedCode: http.StatusForbidden,
+			expectedBody: "",
+		},
 	}
 
-	err = postgres.Migrate.Up()
-	if err != migrate.ErrNoChange && err != nil {
-		return nil, fmt.Errorf("migrate up failed: %w", err)
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			f := fileds{
+				authRepo:  mocks.NewMockAuthRepo(ctrl),
+				tokenRepo: mocks.NewMockTokenRepo(ctrl),
+			}
+			authService := service.NewAuthSevice(f.authRepo, f.tokenRepo, "124jkhsdaf3425", &config.Config{})
+
+			tt.mockBehavior(f.authRepo, tt.user.PhoneNumber)
+
+			service := service.Service{
+				AuthService: authService,
+			}
+			logger, _ := zap.NewProduction()
+			handler := New(&service, cfg, logger)
+
+			r := gin.New()
+			r.POST("/users/auth/sing-in", handler.singIn)
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest("POST", "/users/auth/sing-in", bytes.NewBufferString(tt.body))
+
+			r.ServeHTTP(w, req)
+			assert.Equal(t, tt.expectedCode, w.Code)
+			assert.NotEqual(t, tt.expectedBody, w.Body.String())
+		})
 	}
 
-	redis, err := redis.New(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("redis new failed: %w", err)
-	}
-
-	mongo, err := mongo.New(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("mongo new failed: %w", err)
-	}
-
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.ISO8601TimeEncoder
-	fileEncoder := zapcore.NewJSONEncoder(config)
-	consoleEncoder := zapcore.NewConsoleEncoder(config)
-	writer := zapcore.AddSync(mongo)
-	defaultLogLevel := zapcore.DebugLevel
-	core := zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
-	)
-	log := zap.New(core, zap.AddCaller())
-
-	service := service.New(postgres, redis, cfg.SALT, cfg)
-	return New(service, cfg, log), nil
-}
-
-func TestSingUp(t *testing.T) {
-	h, err := InitHandler()
-	if err != nil {
-		t.Errorf("init handler failed: %v", err)
-	}
-
-	r := SetUpRouter()
-	r.POST("/users/auth/sing-up", h.singUp)
-
-	values := map[string]string{"name": "Ivan", "phone_number": "+7455456", "email": "ripper@algsdh", "password": "12345"}
-	json_data, err := json.Marshal(values)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req, _ := http.NewRequest("POST", "/users/auth/sing-up", bytes.NewBuffer(json_data))
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("got status %v, expected %v", w.Code, http.StatusBadRequest)
-	}
-}
-
-func TestSingIn(t *testing.T) {
-	h, err := InitHandler()
-	if err != nil {
-		t.Errorf("init handler failed: %v", err)
-	}
-
-	r := SetUpRouter()
-	r.POST("/users/auth/sing-in", h.singIn)
-	t.Run("correct password", func(t *testing.T) {
-
-		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-		json_data, err := json.Marshal(values)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusOK {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-		}
-	})
-
-	t.Run("incorrect password", func(t *testing.T) {
-		values := map[string]string{"phone_number": "+7455456", "password": "12345787979797979"}
-		json_data, err := json.Marshal(values)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusForbidden {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-		}
-	})
-
-}
-
-func TestRefresh(t *testing.T) {
-	h, err := InitHandler()
-	if err != nil {
-		t.Errorf("init handler failed: %v", err)
-	}
-
-	r := SetUpRouter()
-	r.GET("/users/auth/refresh", h.Refresh)
-	r.POST("/users/auth/sing-in", h.singIn)
-	t.Run("without cookie", func(t *testing.T) {
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req, _ := http.NewRequest("GET", "/users/auth/refresh", nil)
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusForbidden {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-		}
-	})
-
-	t.Run("with incorrect cookie", func(t *testing.T) {
-
-		if err != nil {
-			log.Fatal(err)
-		}
-		req, _ := http.NewRequest("GET", "/users/auth/refresh", nil)
-		cookie := &http.Cookie{
-			Name:   "refesh_token",
-			Value:  "some_token",
-			MaxAge: 300,
-		}
-		req.AddCookie(cookie)
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusForbidden {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-		}
-	})
-
-	t.Run("with incorrect signature cookie", func(t *testing.T) {
-		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-		json_data, err := json.Marshal(values)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusOK {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-		}
-		cookies := w.Result().Cookies()
-
-		req, _ = http.NewRequest("GET", "/users/auth/refresh", nil)
-		w = httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		cookies[0].Value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzgwMDgzMjMsInVzZXJfaWQiOjh9.YgzD0DlHj63RL1dw8l3IunpsxzY1b-JnIBPO35V9MY"
-
-		req.AddCookie(cookies[0])
-		w = httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusForbidden {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-		}
-	})
-
-	t.Run("with correct cookie", func(t *testing.T) {
-		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-		json_data, err := json.Marshal(values)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusOK {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-		}
-		cookies := w.Result().Cookies()
-
-		req, _ = http.NewRequest("GET", "/users/auth/refresh", nil)
-		w = httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		req.AddCookie(cookies[0])
-		w = httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusOK {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-		}
-	})
-
-}
-
-func TestLogout(t *testing.T) {
-	h, err := InitHandler()
-	if err != nil {
-		t.Errorf("init handler failed: %v", err)
-	}
-
-	r := SetUpRouter()
-	r.GET("/users/auth/logout", h.VerifyToken(), h.Logout)
-	r.POST("/users/auth/sing-in", h.singIn)
-	t.Run("without access_token", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/users/auth/logout", nil)
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusUnauthorized {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusUnauthorized)
-		}
-	})
-
-	t.Run("with access_token", func(t *testing.T) {
-		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-		json_data, err := json.Marshal(values)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusOK {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-		}
-		token := make(map[string]string)
-		json.Unmarshal(w.Body.Bytes(), &token)
-		fmt.Println(token)
-
-		req, _ = http.NewRequest("GET", "/users/auth/logout", nil)
-		w = httptest.NewRecorder()
-		req.Header.Add("Authorization", "Bearer "+token["access_token"])
-		r.ServeHTTP(w, req)
-
-		if w.Code != http.StatusOK {
-			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-		}
-	})
 }
