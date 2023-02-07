@@ -30,7 +30,7 @@ type UserSingIn struct {
 
 type AuthRepo interface {
 	CreateUser(ctx context.Context, user UserSingUp) error
-	CheckUserByPhoneNumber(ctx context.Context, email string) (*UserSingIn, error)
+	CheckUserByPhoneNumber(ctx context.Context, phone string) (*UserSingIn, error)
 }
 
 type TokenRepo interface {
