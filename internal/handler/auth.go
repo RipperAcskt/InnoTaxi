@@ -23,7 +23,7 @@ import (
 // @Failure 400 {object} error "error: err"
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-up [POST]
-func (h *Handler) singUp(c *gin.Context) {
+func (h *Handler) SingUp(c *gin.Context) {
 	start := time.Now()
 	uuid := uuid.New()
 	var user service.UserSingUp
@@ -66,7 +66,7 @@ func (h *Handler) singUp(c *gin.Context) {
 // @Failure 403 {object} error "error: err"
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-in [POST]
-func (h *Handler) singIn(c *gin.Context) {
+func (h *Handler) SingIn(c *gin.Context) {
 	start := time.Now()
 	uuid := uuid.New()
 	var user service.UserSingIn

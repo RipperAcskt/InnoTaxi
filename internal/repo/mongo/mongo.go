@@ -62,7 +62,7 @@ func (m *Mongo) Write(p []byte) (n int, err error) {
 		return 0, fmt.Errorf("unmarshal failed: %w", err)
 	}
 
-	logger := m.client.Database("innotaxi").Collection("logs")
+	logger := m.client.Database(m.cfg.MONGO_DB_NAME).Collection("logs")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
