@@ -30,6 +30,7 @@ func (h *Handler) InitRouters() *gin.Engine {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	users := router.Group("/users")
+	users.Use(h.Log())
 
 	auth := users.Group("/auth")
 	auth.POST("sing-up", h.singUp)

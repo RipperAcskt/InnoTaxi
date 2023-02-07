@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/RipperAcskt/innotaxi/internal/service"
@@ -23,22 +22,18 @@ import (
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-up [POST]
 func (h *Handler) singUp(c *gin.Context) {
-	start := time.Now()
-	uuid := uuid.New()
+	start, uuid := getTimeAndId(c)
 	var user service.UserSingUp
-
 	if err := c.BindJSON(&user); err != nil {
-		h.log.Info("/users/auth/sing-up", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
+
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-
 	err := h.s.SingUp(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserAlreadyExists) {
-			h.log.Info("/users/auth/sing-up", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
@@ -51,7 +46,6 @@ func (h *Handler) singUp(c *gin.Context) {
 		})
 		return
 	}
-	h.log.Info("/users/auth/sing-up", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 }
 
 // @Summary user authentication
@@ -64,12 +58,10 @@ func (h *Handler) singUp(c *gin.Context) {
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-in [POST]
 func (h *Handler) singIn(c *gin.Context) {
-	start := time.Now()
-	uuid := uuid.New()
+	start, uuid := getTimeAndId(c)
 	var user service.UserSingIn
 
 	if err := c.BindJSON(&user); err != nil {
-		h.log.Info("/users/auth/sing-in", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -79,7 +71,6 @@ func (h *Handler) singIn(c *gin.Context) {
 	token, err := h.s.SingIn(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserDoesNotExists) || errors.Is(err, service.ErrIncorrectPassword) {
-			h.log.Info("/users/auth/sing-in", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 			c.JSON(http.StatusForbidden, gin.H{
 				"error": err.Error(),
 			})
@@ -97,7 +88,6 @@ func (h *Handler) singIn(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token.Access,
 	})
-	h.log.Info("/users/auth/sing-in", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 }
 
 func (h *Handler) VerifyToken() gin.HandlerFunc {
@@ -120,7 +110,6 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 				return
 			}
 
-			h.log.Error("service verify failed", zap.Error(err))
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Errorf("verify failed: %w", err).Error(),
 			})
@@ -157,13 +146,11 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 // @Failure 500 {object} error  "error: err"
 // @Router /users/auth/refresh [GET]
 func (h *Handler) Refresh(c *gin.Context) {
-	start := time.Now()
-	uuid := uuid.New()
+	start, uuid := getTimeAndId(c)
 
 	refresh, err := c.Cookie("refresh_token")
 	if err != nil {
 		if err == http.ErrNoCookie {
-			h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": fmt.Errorf("bad refresh token").Error(),
 			})
@@ -179,13 +166,11 @@ func (h *Handler) Refresh(c *gin.Context) {
 	ok, id, err := service.Verify(refresh, h.cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrTokenExpired) {
-			h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
-
 		h.log.Error("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("verify failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("verify rt failed: %w", err).Error(),
@@ -193,7 +178,6 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 	if !ok {
-		h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": fmt.Errorf("wrong signature").Error(),
 		})
@@ -202,7 +186,6 @@ func (h *Handler) Refresh(c *gin.Context) {
 
 	token, err := service.NewToken(id, h.cfg)
 	if err != nil {
-		h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error": fmt.Errorf("wrong signature").Error(),
 		})
@@ -214,7 +197,6 @@ func (h *Handler) Refresh(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token.Access,
 	})
-	h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 }
 
 // @Summary logout user
@@ -227,11 +209,9 @@ func (h *Handler) Refresh(c *gin.Context) {
 // @Router /users/auth/logout [GET]
 // @Security Bearer
 func (h *Handler) Logout(c *gin.Context) {
-	start := time.Now()
-	uuid := uuid.New()
+	start, uuid := getTimeAndId(c)
 	id, ok := c.Get("id")
 	if !ok {
-		h.log.Info("/users/auth/logout", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "can't get id",
 		})
@@ -241,7 +221,6 @@ func (h *Handler) Logout(c *gin.Context) {
 	exp := time.Duration(h.cfg.ACCESS_TOKEN_EXP) * time.Minute
 	token := strings.Split(c.GetHeader("Authorization"), " ")
 	if len(token) < 2 {
-		h.log.Info("/users/auth/logout", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": fmt.Errorf("access token required").Error(),
 		})
@@ -259,5 +238,4 @@ func (h *Handler) Logout(c *gin.Context) {
 	}
 	c.SetCookie("refresh_token", "", time.Now().Second(), "/users/auth", "", false, true)
 	c.Status(http.StatusOK)
-	h.log.Info("/users/auth/logout", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
 }
