@@ -18,9 +18,9 @@ jobs:
         with:
           go-version: 1.19
 
-      - run: go test ./test/integration
       - run: go test ./test/unit/postgres 
       - run: go test ./test/unit/service 
+      - run: go test ./test/integration
 
       - uses: golangci/golangci-lint-action@v3
 
