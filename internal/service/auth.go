@@ -30,7 +30,7 @@ type UserSingIn struct {
 
 type AuthRepo interface {
 	CreateUser(ctx context.Context, user UserSingUp) error
-	CheckUserByPhoneNumber(ctx context.Context, email string) (*UserSingIn, error)
+	CheckUserByPhoneNumber(ctx context.Context, phone string) (*UserSingIn, error)
 }
 
 type TokenRepo interface {
@@ -50,7 +50,7 @@ func NewAuthSevice(postgres AuthRepo, redis TokenRepo, salt string, cfg *config.
 
 func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
 	var err error
-	user.Password, err = s.generateHash(user.Password)
+	user.Password, err = s.GenerateHash(user.Password)
 	if err != nil {
 		return fmt.Errorf("generate hash failed: %w", err)
 	}
@@ -62,7 +62,7 @@ func (s *AuthService) SingUp(ctx context.Context, user UserSingUp) error {
 	return nil
 }
 
-func (s *AuthService) generateHash(password string) (string, error) {
+func (s *AuthService) GenerateHash(password string) (string, error) {
 	hash := sha1.New()
 	_, err := hash.Write([]byte(password))
 	if err != nil {
