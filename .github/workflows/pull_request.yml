@@ -1,16 +1,17 @@
 name: pull request into brunches
 on: [pull_request]
 jobs:
-  build:
+  container-job:
     runs-on: ubuntu-latest
-    steps:
-      - name: Setup PostgreSQL
-        uses: Harmon758/postgresql-action@v1.0.0
-        with:
-          POSTGRES_DB: innotaxi_test
-          POSTGRES_USER: ripper
-          POSTGRES_PASSWORD: 150403
+    container: node:10.18-jessie
 
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: 150403
+          
+  build:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-go@v3
