@@ -9,7 +9,10 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_PASSWORD: 150403
+          env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: innotaxi_test
 
     steps:
       - uses: actions/checkout@v3
