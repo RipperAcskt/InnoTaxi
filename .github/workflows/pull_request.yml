@@ -9,7 +9,6 @@ jobs:
       postgres:
         image: postgres
         env:
-          env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: innotaxi_test
@@ -26,6 +25,7 @@ jobs:
 
       - run: go test ./test/unit/postgres 
       - run: go test ./test/unit/service 
+      - run: psql -h postgres -d innotaxi_test -U postgres -c 'SELECT 1;'
       - run: go test ./test/integration
 
       - uses: golangci/golangci-lint-action@v3
