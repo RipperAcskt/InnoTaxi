@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"path"
-	"runtime"
 	"testing"
 	"time"
 
@@ -262,13 +259,6 @@ func TestCheckToken(t *testing.T) {
 	}
 }
 func TestVerify(t *testing.T) {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := path.Join(path.Dir(filename), "../../..")
-	err := os.Chdir(dir)
-	if err != nil {
-		panic(err)
-	}
-
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatalf("config new failed: %v", err)
