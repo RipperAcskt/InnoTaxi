@@ -75,8 +75,15 @@ paths:
       - user
   /users/auth/logout:
     get:
-      produces:
+      consumes:
       - application/json
+      parameters:
+      - description: 'access_token: token'
+        in: body
+        name: access_token
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: OK
@@ -91,7 +98,7 @@ paths:
           schema: {}
       security:
       - Bearer: []
-      summary: refresh access token
+      summary: logout user
       tags:
       - auth
   /users/auth/refresh:

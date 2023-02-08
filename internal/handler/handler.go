@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/zap"
 
 	"github.com/RipperAcskt/innotaxi/config"
 	_ "github.com/RipperAcskt/innotaxi/docs"
@@ -15,10 +16,11 @@ import (
 type Handler struct {
 	s   *service.Service
 	cfg *config.Config
+	log *zap.Logger
 }
 
-func New(s *service.Service, cfg *config.Config) *Handler {
-	return &Handler{s, cfg}
+func New(s *service.Service, cfg *config.Config, log *zap.Logger) *Handler {
+	return &Handler{s, cfg, log}
 }
 
 func (h *Handler) InitRouters() *gin.Engine {
