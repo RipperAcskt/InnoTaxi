@@ -34,6 +34,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
+			return
 		}
 		h.log.Error("/users/profile/{id}", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("get profile failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{

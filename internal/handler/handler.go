@@ -15,7 +15,7 @@ import (
 
 type Handler struct {
 	s   *service.Service
-	cfg *config.Config
+	Cfg *config.Config
 	log *zap.Logger
 }
 

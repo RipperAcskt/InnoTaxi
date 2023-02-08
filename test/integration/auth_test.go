@@ -1,12 +1,14 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/handler"
@@ -116,202 +118,167 @@ func TestSingUp(t *testing.T) {
 	}
 }
 
-// func TestSingIn(t *testing.T) {
-// 	h, err := InitHandler()
-// 	if err != nil {
-// 		t.Errorf("init handler failed: %v", err)
-// 	}
+func TestSingIn(t *testing.T) {
+	h, err := InitHandler()
+	if err != nil {
+		t.Errorf("init handler failed: %v", err)
+	}
 
-// 	r := SetUpRouter()
-// 	r.POST("/users/auth/sing-in", h.SingIn)
-// 	t.Run("correct password", func(t *testing.T) {
+	test := []struct {
+		name string
+		body string
+		code int
+		err  error
+	}{
+		{
+			name: "correct password",
+			body: `{"phone_number": "+7455456", "password": "12345"}`,
+			code: http.StatusOK,
+			err:  nil,
+		},
+		{
+			name: "existed user",
+			body: `{"phone_number": "+7455456", "password": "12345787979797979"}`,
+			code: http.StatusForbidden,
+			err:  service.ErrIncorrectPassword,
+		},
+		{
+			name: "empty body",
+			body: `{}`,
+			code: http.StatusBadRequest,
+			err:  fmt.Errorf("EOF"),
+		},
+	}
 
-// 		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-// 		json_data, err := json.Marshal(values)
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			r := SetUpRouter()
+			r.POST("/users/auth/sing-up", h.SingIn)
 
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
+			req, _ := http.NewRequest("POST", "/users/auth/sing-up", bytes.NewBufferString(tt.body))
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
 
-// 		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
+			assert.Equal(t, tt.code, w.Code)
+			assert.IsEqual(tt.err, w.Body.String())
+		})
+	}
 
-// 		if w.Code != http.StatusOK {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-// 		}
-// 	})
+}
 
-// 	t.Run("incorrect password", func(t *testing.T) {
-// 		values := map[string]string{"phone_number": "+7455456", "password": "12345787979797979"}
-// 		json_data, err := json.Marshal(values)
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
+func TestRefresh(t *testing.T) {
+	h, err := InitHandler()
+	if err != nil {
+		t.Errorf("init handler failed: %v", err)
+	}
 
-// 		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
+	test := []struct {
+		name   string
+		cookie http.Cookie
+		code   int
+		err    error
+	}{
+		{
+			name:   "without cookie",
+			cookie: http.Cookie{},
+			code:   http.StatusForbidden,
+			err:    fmt.Errorf("bad refresh token"),
+		},
+		{
+			name: "incorrect cookie",
+			cookie: http.Cookie{
+				Name:   "refesh_token",
+				Value:  "some_token",
+				MaxAge: 300,
+			},
+			code: http.StatusForbidden,
+			err:  fmt.Errorf("token parse failed: "),
+		},
+		{
+			name: "correct cookie",
+			cookie: http.Cookie{
+				Name:   "refesh_token",
+				Value:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzg0MjcyNzAsInVzZXJfaWQiOjEwfQ.xwBqJhor6aQU8cgkREFhg5u-jLNtCBQgon96C1ppgEE",
+				MaxAge: int((time.Duration(h.Cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds()),
+			},
+			code: http.StatusForbidden,
+			err:  nil,
+		},
+	}
 
-// 		if w.Code != http.StatusForbidden {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-// 		}
-// 	})
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			r := SetUpRouter()
+			r.GET("/users/auth/refresh", h.Refresh)
 
-// }
+			req, _ := http.NewRequest("GET", "/users/auth/refresh", nil)
+			req.AddCookie(&tt.cookie)
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
 
-// func TestRefresh(t *testing.T) {
-// 	h, err := InitHandler()
-// 	if err != nil {
-// 		t.Errorf("init handler failed: %v", err)
-// 	}
+			assert.Equal(t, tt.code, w.Code)
+			assert.IsEqual(tt.err, w.Body.String())
+		})
+	}
+}
 
-// 	r := SetUpRouter()
-// 	r.GET("/users/auth/refresh", h.Refresh)
-// 	r.POST("/users/auth/sing-in", h.SingIn)
-// 	t.Run("without cookie", func(t *testing.T) {
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
+func TestLogout(t *testing.T) {
+	h, err := InitHandler()
+	if err != nil {
+		t.Errorf("init handler failed: %v", err)
+	}
 
-// 		req, _ := http.NewRequest("GET", "/users/auth/refresh", nil)
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
+	test := []struct {
+		name         string
+		access_token string
+		getAccess    func() string
+		code         int
+		err          error
+	}{
+		{
+			name: "correct access token",
+			getAccess: func() string {
+				r := SetUpRouter()
+				r.POST("/users/auth/sing-in", h.SingIn)
 
-// 		if w.Code != http.StatusForbidden {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-// 		}
-// 	})
+				req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBufferString(`{"phone_number": "+7455456", "password": "12345"}`))
+				w := httptest.NewRecorder()
+				r.ServeHTTP(w, req)
 
-// 	t.Run("with incorrect cookie", func(t *testing.T) {
+				assert.Equal(t, http.StatusOK, w.Code)
 
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-// 		req, _ := http.NewRequest("GET", "/users/auth/refresh", nil)
-// 		cookie := &http.Cookie{
-// 			Name:   "refesh_token",
-// 			Value:  "some_token",
-// 			MaxAge: 300,
-// 		}
-// 		req.AddCookie(cookie)
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
+				token := make(map[string]string)
+				json.Unmarshal(w.Body.Bytes(), &token)
 
-// 		if w.Code != http.StatusForbidden {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-// 		}
-// 	})
+				return token["access_token"]
+			},
+			code: http.StatusOK,
+			err:  nil,
+		},
+		{
+			name:         "incorrect access token",
+			access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzU4MzcwNzAsInVzZXJfaWQiOjEwfQ.PKg3NU0pwSLFOu1E-gpW2zb8e-X5BDDlv3GGTxg-HmI",
+			code:         http.StatusForbidden,
+			err:          fmt.Errorf("wrong signature"),
+		},
+	}
 
-// 	t.Run("with incorrect signature cookie", func(t *testing.T) {
-// 		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-// 		json_data, err := json.Marshal(values)
+	for _, tt := range test {
+		t.Run(tt.name, func(t *testing.T) {
+			r := SetUpRouter()
+			r.GET("/users/auth/logout/:id", h.VerifyToken(), h.Logout)
 
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
+			if tt.getAccess != nil {
+				tt.access_token = tt.getAccess()
+			}
 
-// 		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
+			req, _ := http.NewRequest("GET", "/users/auth/logout/1", nil)
+			req.Header.Add("Authorization", "Bearer "+tt.access_token)
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
 
-// 		if w.Code != http.StatusOK {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-// 		}
-// 		cookies := w.Result().Cookies()
-
-// 		req, _ = http.NewRequest("GET", "/users/auth/refresh", nil)
-// 		w = httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
-
-// 		cookies[0].Value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzgwMDgzMjMsInVzZXJfaWQiOjh9.YgzD0DlHj63RL1dw8l3IunpsxzY1b-JnIBPO35V9MY"
-
-// 		req.AddCookie(cookies[0])
-// 		w = httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
-
-// 		if w.Code != http.StatusForbidden {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusForbidden)
-// 		}
-// 	})
-
-// 	t.Run("with correct cookie", func(t *testing.T) {
-// 		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-// 		json_data, err := json.Marshal(values)
-
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-
-// 		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
-
-// 		if w.Code != http.StatusOK {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-// 		}
-// 		cookies := w.Result().Cookies()
-
-// 		req, _ = http.NewRequest("GET", "/users/auth/refresh", nil)
-// 		w = httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
-
-// 		req.AddCookie(cookies[0])
-// 		w = httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
-
-// 		if w.Code != http.StatusOK {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-// 		}
-// 	})
-
-// }
-
-// func TestLogout(t *testing.T) {
-// 	h, err := InitHandler()
-// 	if err != nil {
-// 		t.Errorf("init handler failed: %v", err)
-// 	}
-
-// 	r := SetUpRouter()
-// 	r.GET("/users/auth/logout", h.VerifyToken(), h.Logout)
-// 	r.POST("/users/auth/sing-in", h.SingIn)
-// 	t.Run("without access_token", func(t *testing.T) {
-// 		req, _ := http.NewRequest("GET", "/users/auth/logout", nil)
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
-
-// 		if w.Code != http.StatusUnauthorized {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusUnauthorized)
-// 		}
-// 	})
-
-// 	t.Run("with access_token", func(t *testing.T) {
-// 		values := map[string]string{"phone_number": "+7455456", "password": "12345"}
-// 		json_data, err := json.Marshal(values)
-
-// 		if err != nil {
-// 			log.Fatal(err)
-// 		}
-
-// 		req, _ := http.NewRequest("POST", "/users/auth/sing-in", bytes.NewBuffer(json_data))
-// 		w := httptest.NewRecorder()
-// 		r.ServeHTTP(w, req)
-
-// 		if w.Code != http.StatusOK {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-// 		}
-// 		token := make(map[string]string)
-// 		json.Unmarshal(w.Body.Bytes(), &token)
-// 		fmt.Println(token)
-
-// 		req, _ = http.NewRequest("GET", "/users/auth/logout", nil)
-// 		w = httptest.NewRecorder()
-// 		req.Header.Add("Authorization", "Bearer "+token["access_token"])
-// 		r.ServeHTTP(w, req)
-
-// 		if w.Code != http.StatusOK {
-// 			t.Errorf("got status %v, expected %v", w.Code, http.StatusOK)
-// 		}
-// 	})
-// }
+			assert.Equal(t, tt.code, w.Code)
+			assert.IsEqual(tt.err, w.Body.String())
+		})
+	}
+}

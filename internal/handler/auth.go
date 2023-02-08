@@ -94,7 +94,7 @@ func (h *Handler) SingIn(c *gin.Context) {
 		return
 	}
 
-	exp := int((time.Duration(h.cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
+	exp := int((time.Duration(h.Cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
 	c.SetCookie("refresh_token", token.RT, exp, "/users/auth", "", false, true)
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token.Access,
@@ -113,7 +113,7 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 		}
 		accessToken := token[1]
 
-		id, err := service.Verify(accessToken, h.cfg)
+		id, err := service.Verify(accessToken, h.Cfg)
 		if err != nil {
 			if errors.Is(err, service.ErrTokenExpired) {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -178,7 +178,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	id, err := service.Verify(refresh, h.cfg)
+	id, err := service.Verify(refresh, h.Cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrTokenExpired) {
 			h.log.Info("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
@@ -202,7 +202,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	token, err := service.NewToken(id, h.cfg)
+	token, err := service.NewToken(id, h.Cfg)
 	if err != nil {
 		h.log.Error("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("new token failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -211,7 +211,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	exp := int((time.Duration(h.cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
+	exp := int((time.Duration(h.Cfg.REFRESH_TOKEN_EXP) * time.Hour * 24).Seconds())
 	c.SetCookie("refresh_token", token.RT, exp, "/users/auth", "", false, true)
 	c.JSON(http.StatusOK, gin.H{
 		"access_token": token.Access,
@@ -240,7 +240,7 @@ func (h *Handler) Logout(c *gin.Context) {
 		return
 	}
 
-	exp := time.Duration(h.cfg.ACCESS_TOKEN_EXP) * time.Minute
+	exp := time.Duration(h.Cfg.ACCESS_TOKEN_EXP) * time.Minute
 	token := strings.Split(c.GetHeader("Authorization"), " ")
 	if len(token) < 2 {
 		h.log.Info("/users/auth/logout", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
