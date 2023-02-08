@@ -7,10 +7,9 @@ jobs:
       - name: Setup PostgreSQL
         uses: Harmon758/postgresql-action@v1.0.0
         with:
-    
-        postgresql db: innotaxi_test
-        postgresql user: ripper
-        postgresql password: 150403
+          POSTGRES_DB: innotaxi_test
+          POSTGRES_USER: ripper
+          POSTGRES_PASSWORD: 150403
 
       - uses: actions/checkout@v3
 
