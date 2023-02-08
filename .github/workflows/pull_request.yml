@@ -4,6 +4,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Setup PostgreSQL
+      uses: Harmon758/postgresql-action@v1.0.0
+      with:
+   
+      postgresql db: innotaxi_test
+      postgresql user: ripper
+      postgresql password: 150403
+
       - uses: actions/checkout@v3
 
       - uses: actions/setup-go@v3
