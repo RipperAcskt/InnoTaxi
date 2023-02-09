@@ -22,7 +22,9 @@ import (
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-up [POST]
 func (h *Handler) singUp(c *gin.Context) {
-	start, uuid := getTimeAndId(c)
+	logger, start := getLogger(c)
+	h.log = logger
+
 	var user service.UserSingUp
 	if err := c.BindJSON(&user); err != nil {
 
@@ -40,7 +42,7 @@ func (h *Handler) singUp(c *gin.Context) {
 			return
 		}
 
-		h.log.Error("/users/auth/sing-up", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("service sing up failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/auth/sing-up", zap.Error(fmt.Errorf("service sing up failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -58,7 +60,9 @@ func (h *Handler) singUp(c *gin.Context) {
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-in [POST]
 func (h *Handler) singIn(c *gin.Context) {
-	start, uuid := getTimeAndId(c)
+	logger, start := getLogger(c)
+	h.log = logger
+
 	var user service.UserSingIn
 
 	if err := c.BindJSON(&user); err != nil {
@@ -76,7 +80,7 @@ func (h *Handler) singIn(c *gin.Context) {
 			})
 			return
 		}
-		h.log.Error("/users/auth/sing-in", zap.String("method", "POST"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("service sing in failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/auth/sing-in", zap.Error(fmt.Errorf("service sing in failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -146,7 +150,8 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 // @Failure 500 {object} error  "error: err"
 // @Router /users/auth/refresh [GET]
 func (h *Handler) Refresh(c *gin.Context) {
-	start, uuid := getTimeAndId(c)
+	logger, start := getLogger(c)
+	h.log = logger
 
 	refresh, err := c.Cookie("refresh_token")
 	if err != nil {
@@ -156,7 +161,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 			})
 			return
 		}
-		h.log.Error("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("get cookie failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/auth/refresh", zap.Error(fmt.Errorf("get cookie failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -171,7 +176,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 			})
 			return
 		}
-		h.log.Error("/users/auth/refresh", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("verify failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/auth/refresh", zap.Error(fmt.Errorf("verify failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("verify rt failed: %w", err).Error(),
 		})
@@ -209,7 +214,9 @@ func (h *Handler) Refresh(c *gin.Context) {
 // @Router /users/auth/logout [GET]
 // @Security Bearer
 func (h *Handler) Logout(c *gin.Context) {
-	start, uuid := getTimeAndId(c)
+	logger, start := getLogger(c)
+	h.log = logger
+
 	id, ok := c.Get("id")
 	if !ok {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -230,7 +237,7 @@ func (h *Handler) Logout(c *gin.Context) {
 
 	err := h.s.Logout(id.(string), accessToken, exp)
 	if err != nil {
-		h.log.Error("/users/auth/logout", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("logout failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/auth/logout", zap.Error(fmt.Errorf("logout failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

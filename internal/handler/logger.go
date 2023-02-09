@@ -11,18 +11,19 @@ import (
 func (h *Handler) Log() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		uuid := uuid.New()
+		h.log = h.log.WithOptions(zap.Fields(zap.String("url", c.Request.URL.Path), zap.String("method", c.Request.Method), zap.Any("uuid", uuid.New()), zap.String("request time", time.Now().String())))
 		c.Set("start", start)
-		c.Set("uuid", uuid)
+		c.Set("logger", *h.log)
 		c.Next()
 
-		h.log.Info("request", zap.String("url", c.Request.URL.Path), zap.String("method", c.Request.Method), zap.Any("uuid", uuid), zap.String("time", time.Since(start).String()))
+		h.log.Info("request", zap.String("time", time.Since(start).String()))
 	}
 }
 
-func getTimeAndId(c *gin.Context) (start time.Time, uuid any) {
-	t, _ := c.Get("start")
-	start, _ = t.(time.Time)
-	uuid, _ = c.Get("uuid")
-	return
+func getLogger(c *gin.Context) (*zap.Logger, time.Time) {
+	tmp, _ := c.Get("start")
+	start := tmp.(time.Time)
+	tmp, _ = c.Get("logger")
+	logger := tmp.(zap.Logger)
+	return &logger, start
 }

@@ -23,7 +23,8 @@ import (
 // @Router /users/profile/{id} [GET]
 // @Security Bearer
 func (h *Handler) GetProfile(c *gin.Context) {
-	start, uuid := getTimeAndId(c)
+	logger, start := getLogger(c)
+	h.log = logger
 
 	user, err := h.s.GetProfile(c.Request.Context(), c.Param("id"))
 	if err != nil {
@@ -32,7 +33,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 				"error": err.Error(),
 			})
 		}
-		h.log.Error("/users/profile/{id}", zap.String("method", "GET"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("get profile failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/profile/{id}", zap.Error(fmt.Errorf("get profile failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("get profile failed: %w", err).Error(),
 		})
@@ -55,7 +56,9 @@ func (h *Handler) GetProfile(c *gin.Context) {
 // @Router /users/profile/{id} [PUT]
 // @Security Bearer
 func (h *Handler) UpdateProfile(c *gin.Context) {
-	start, uuid := getTimeAndId(c)
+	logger, start := getLogger(c)
+	h.log = logger
+
 	var user model.User
 
 	if err := c.BindJSON(&user); err != nil {
@@ -72,7 +75,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 				"error": err.Error(),
 			})
 		}
-		h.log.Error("/users/profile/{id}", zap.String("method", "PUT"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("update profile failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/profile/{id}", zap.Error(fmt.Errorf("update profile failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -93,7 +96,8 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 // @Router /users/{id} [DELETE]
 // @Security Bearer
 func (h *Handler) DeleteUser(c *gin.Context) {
-	start, uuid := getTimeAndId(c)
+	logger, start := getLogger(c)
+	h.log = logger
 
 	err := h.s.DeleteUser(c.Request.Context(), c.Param("id"))
 	if err != nil {
@@ -102,7 +106,7 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 				"error": err.Error(),
 			})
 		}
-		h.log.Error("/users/{id}", zap.String("method", "DELETE"), zap.Any("uuid", uuid), zap.Error(fmt.Errorf("delete user failed: %w", err)), zap.String("time", time.Since(start).String()))
+		h.log.Error("/users/{id}", zap.Error(fmt.Errorf("delete user failed: %w", err)), zap.String("time", time.Since(start).String()))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
