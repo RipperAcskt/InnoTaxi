@@ -4,15 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"path"
-	"runtime"
 	"testing"
 	"time"
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
-	"github.com/RipperAcskt/innotaxi/internal/service/mocks"
+	"github.com/RipperAcskt/innotaxi/test/unit/service/mocks"
 	"github.com/go-playground/assert/v2"
 	"github.com/golang/mock/gomock"
 )
@@ -262,13 +259,6 @@ func TestCheckToken(t *testing.T) {
 	}
 }
 func TestVerify(t *testing.T) {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := path.Join(path.Dir(filename), "../..")
-	err := os.Chdir(dir)
-	if err != nil {
-		panic(err)
-	}
-
 	cfg, err := config.New()
 	if err != nil {
 		log.Fatalf("config new failed: %v", err)

@@ -23,6 +23,7 @@ type Config struct {
 
 	REDIS_DB_HOST     string `mapstructure:"REDIS_DB_HOST"`
 	REDIS_DB_PASSWORD string `mapstructure:"REDIS_DB_PASSWORD"`
+	REDIS_DB_NAME     int    `mapstructure:"REDIS_DB_NAME"`
 
 	MONGO_DB_HOST     string `mapstructure:"MONGO_DB_HOST"`
 	MONGO_DB_USERNAME string `mapstructure:"MONGO_DB_USERNAME"`

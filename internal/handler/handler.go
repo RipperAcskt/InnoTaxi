@@ -13,7 +13,7 @@ import (
 
 type Handler struct {
 	s   *service.Service
-	cfg *config.Config
+	Cfg *config.Config
 	log *zap.Logger
 }
 
@@ -30,8 +30,8 @@ func (h *Handler) InitRouters() *gin.Engine {
 	users.Use(h.Log())
 
 	auth := users.Group("/auth")
-	auth.POST("sing-up", h.singUp)
-	auth.POST("sing-in", h.singIn)
+	auth.POST("sing-up", h.SingUp)
+	auth.POST("sing-in", h.SingIn)
 	auth.GET("refresh", h.Refresh)
 	auth.GET("logout", h.VerifyToken(), h.Logout)
 

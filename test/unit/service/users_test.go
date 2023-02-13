@@ -6,7 +6,7 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/RipperAcskt/innotaxi/internal/service"
-	"github.com/RipperAcskt/innotaxi/internal/service/mocks"
+	"github.com/RipperAcskt/innotaxi/test/unit/service/mocks"
 	"github.com/go-playground/assert/v2"
 	"github.com/golang/mock/gomock"
 )
