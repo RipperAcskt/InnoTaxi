@@ -17,7 +17,7 @@ func New(cfg *config.Config) (*Redis, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.REDIS_DB_HOST,
 		Password: cfg.REDIS_DB_PASSWORD,
-		DB:       0,
+		DB:       cfg.REDIS_DB_NAME,
 	})
 
 	_, err := client.Ping().Result()
