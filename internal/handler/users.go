@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/RipperAcskt/innotaxi/internal/model"
 	"github.com/RipperAcskt/innotaxi/internal/service"
@@ -23,8 +22,7 @@ import (
 // @Router /users/profile/{id} [GET]
 // @Security Bearer
 func (h *Handler) GetProfile(c *gin.Context) {
-	logger, start := getLogger(c)
-	h.log = logger
+	logger := getLogger(c)
 
 	user, err := h.s.GetProfile(c.Request.Context(), c.Param("id"))
 	if err != nil {
@@ -34,7 +32,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 			})
 			return
 		}
-		h.log.Error("/users/profile/{id}", zap.Error(fmt.Errorf("get profile failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/profile/{id}", zap.Error(fmt.Errorf("get profile failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("get profile failed: %w", err).Error(),
 		})
@@ -57,8 +55,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 // @Router /users/profile/{id} [PUT]
 // @Security Bearer
 func (h *Handler) UpdateProfile(c *gin.Context) {
-	logger, start := getLogger(c)
-	h.log = logger
+	logger := getLogger(c)
 
 	var user model.User
 
@@ -76,7 +73,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 				"error": err.Error(),
 			})
 		}
-		h.log.Error("/users/profile/{id}", zap.Error(fmt.Errorf("update profile failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/profile/{id}", zap.Error(fmt.Errorf("update profile failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -97,8 +94,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 // @Router /users/{id} [DELETE]
 // @Security Bearer
 func (h *Handler) DeleteUser(c *gin.Context) {
-	logger, start := getLogger(c)
-	h.log = logger
+	logger := getLogger(c)
 
 	err := h.s.DeleteUser(c.Request.Context(), c.Param("id"))
 	if err != nil {
@@ -108,7 +104,7 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 			})
 			return
 		}
-		h.log.Error("/users/{id}", zap.Error(fmt.Errorf("delete user failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/{id}", zap.Error(fmt.Errorf("delete user failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

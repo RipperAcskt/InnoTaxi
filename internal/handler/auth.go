@@ -23,8 +23,7 @@ import (
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-up [POST]
 func (h *Handler) SingUp(c *gin.Context) {
-	logger, start := getLogger(c)
-	h.log = logger
+	logger := getLogger(c)
 
 	var user service.UserSingUp
 	if err := c.BindJSON(&user); err != nil {
@@ -43,7 +42,7 @@ func (h *Handler) SingUp(c *gin.Context) {
 			return
 		}
 
-		h.log.Error("/users/auth/sing-up", zap.Error(fmt.Errorf("service sing up failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/auth/sing-up", zap.Error(fmt.Errorf("service sing up failed: %w", err)))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -63,8 +62,7 @@ func (h *Handler) SingUp(c *gin.Context) {
 // @Failure 500 {object} error "error: err"
 // @Router /users/auth/sing-in [POST]
 func (h *Handler) SingIn(c *gin.Context) {
-	logger, start := getLogger(c)
-	h.log = logger
+	logger := getLogger(c)
 
 	var user service.UserSingIn
 
@@ -82,7 +80,7 @@ func (h *Handler) SingIn(c *gin.Context) {
 			})
 			return
 		}
-		h.log.Error("/users/auth/sing-in", zap.Error(fmt.Errorf("service sing in failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/auth/sing-in", zap.Error(fmt.Errorf("service sing in failed: %w", err)))
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -152,8 +150,7 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 // @Failure 500 {object} error  "error: err"
 // @Router /users/auth/refresh [GET]
 func (h *Handler) Refresh(c *gin.Context) {
-	logger, start := getLogger(c)
-	h.log = logger
+	logger := getLogger(c)
 
 	refresh, err := c.Cookie("refresh_token")
 	if err != nil {
@@ -163,7 +160,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 			})
 			return
 		}
-		h.log.Error("/users/auth/refresh", zap.Error(fmt.Errorf("get cookie failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/auth/refresh", zap.Error(fmt.Errorf("get cookie failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -186,7 +183,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 			return
 		}
 
-		h.log.Error("/users/auth/refresh", zap.Error(fmt.Errorf("verify failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/auth/refresh", zap.Error(fmt.Errorf("verify failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("verify rt failed: %w", err).Error(),
 		})
@@ -195,7 +192,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 
 	token, err := service.NewToken(id, h.Cfg)
 	if err != nil {
-		h.log.Error("/users/auth/refresh", zap.Error(fmt.Errorf("new token failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/auth/refresh", zap.Error(fmt.Errorf("new token failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -219,8 +216,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 // @Router /users/auth/logout [GET]
 // @Security Bearer
 func (h *Handler) Logout(c *gin.Context) {
-	logger, start := getLogger(c)
-	h.log = logger
+	logger := getLogger(c)
 
 	id, ok := c.Get("id")
 	if !ok {
@@ -242,7 +238,7 @@ func (h *Handler) Logout(c *gin.Context) {
 
 	err := h.s.Logout(id.(string), accessToken, exp)
 	if err != nil {
-		h.log.Error("/users/auth/logout", zap.Error(fmt.Errorf("logout failed: %w", err)), zap.String("time", time.Since(start).String()))
+		logger.Error("/users/auth/logout", zap.Error(fmt.Errorf("logout failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

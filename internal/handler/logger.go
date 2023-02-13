@@ -12,7 +12,6 @@ func (h *Handler) Log() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		h.log = h.log.WithOptions(zap.Fields(zap.String("url", c.Request.URL.Path), zap.String("method", c.Request.Method), zap.Any("uuid", uuid.New()), zap.String("request time", time.Now().String())))
-		c.Set("start", start)
 		c.Set("logger", *h.log)
 		c.Next()
 
@@ -20,10 +19,8 @@ func (h *Handler) Log() gin.HandlerFunc {
 	}
 }
 
-func getLogger(c *gin.Context) (*zap.Logger, time.Time) {
-	tmp, _ := c.Get("start")
-	start := tmp.(time.Time)
-	tmp, _ = c.Get("logger")
+func getLogger(c *gin.Context) *zap.Logger {
+	tmp, _ := c.Get("logger")
 	logger := tmp.(zap.Logger)
-	return &logger, start
+	return &logger
 }
