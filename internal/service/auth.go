@@ -87,7 +87,12 @@ func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, erro
 		return nil, ErrIncorrectPassword
 	}
 
-	token, err := NewToken(userDB.ID, s.cfg)
+	params := TokenParams{
+		UserID: userDB.ID,
+		Type:   "user",
+	}
+
+	token, err := NewToken(params, s.cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new token failed: %w", err)
 	}

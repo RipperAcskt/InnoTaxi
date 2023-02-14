@@ -6,10 +6,12 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 var (
 	ErrTokenExpired = fmt.Errorf("token expired")
+	ErrUnknownType  = fmt.Errorf("unknown type")
 )
 
 type Token struct {
@@ -19,18 +21,32 @@ type Token struct {
 	RTExpiration     time.Time
 }
 
-func NewToken(id uint64, cfg *config.Config) (*Token, error) {
+type TokenParams struct {
+	UserID   uint64
+	DriverID uuid.UUID
+	Type     string
+}
+
+func NewToken(params TokenParams, cfg *config.Config) (*Token, error) {
+	var id any
+	if params.Type == "user" {
+		id = params.UserID
+	} else if params.Type == "driver" {
+		id = params.DriverID
+	} else {
+		return nil, ErrUnknownType
+	}
 
 	accessExp := time.Now().Add(time.Duration(cfg.ACCESS_TOKEN_EXP) * time.Minute)
 
-	access, err := newJwt(accessExp, id, cfg)
+	access, err := newJwt(accessExp, id, params.Type, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new jwt failed: %w", err)
 	}
 
 	rtExp := time.Now().Add(time.Duration(cfg.REFRESH_TOKEN_EXP) * 24 * time.Hour)
 
-	rt, err := newJwt(rtExp, id, cfg)
+	rt, err := newJwt(rtExp, id, params.Type, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new rt failed: %w", err)
 	}
@@ -38,11 +54,12 @@ func NewToken(id uint64, cfg *config.Config) (*Token, error) {
 	return &Token{access, rt, accessExp, rtExp}, nil
 }
 
-func newJwt(jwtExp time.Time, id uint64, cfg *config.Config) (string, error) {
+func newJwt(jwtExp time.Time, id any, t string, cfg *config.Config) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
 	claims["user_id"] = id
+	claims["type"] = t
 	claims["exp"] = jwtExp.UTC().Unix()
 
 	secret := []byte(cfg.HS256_SECRET)
