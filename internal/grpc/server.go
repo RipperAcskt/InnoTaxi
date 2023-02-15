@@ -7,7 +7,6 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 )
 
@@ -36,13 +35,8 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) GetJWT(c context.Context, params *service.Params) (*service.Response, error) {
-	id, err := uuid.FromBytes([]byte(params.DriverID))
-	if err != nil {
-		return nil, fmt.Errorf("from bytes failed: %w", err)
-	}
-
 	tokenParams := service.TokenParams{
-		DriverID: id,
+		DriverID: params.DriverID,
 		Type:     params.Type,
 	}
 

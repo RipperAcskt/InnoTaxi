@@ -6,7 +6,6 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
 )
 
 var (
@@ -23,7 +22,7 @@ type Token struct {
 
 type TokenParams struct {
 	UserID   uint64
-	DriverID uuid.UUID
+	DriverID string
 	Type     string
 }
 
