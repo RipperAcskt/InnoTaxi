@@ -5,12 +5,14 @@ import (
 	"os"
 
 	"github.com/RipperAcskt/innotaxi/config"
+	grpc "github.com/RipperAcskt/innotaxi/internal/grpc"
 	"github.com/RipperAcskt/innotaxi/internal/handler"
 	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
 	"github.com/RipperAcskt/innotaxi/internal/server"
 	"github.com/RipperAcskt/innotaxi/internal/service"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -62,8 +64,20 @@ func Run() error {
 	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg, log)
 	server := new(server.Server)
-	if err := server.Run(handler.InitRouters(), cfg); err != nil {
-		return fmt.Errorf("server run failed: %w", err)
-	}
-	return nil
+
+	errChan := make(chan error)
+	go func(c chan error) {
+		if err := server.Run(handler.InitRouters(), cfg); err != nil {
+			c <- fmt.Errorf("server run failed: %w", err)
+		}
+	}(errChan)
+
+	grpcServer := grpc.New(cfg)
+	go func(c chan error) {
+		if err := grpcServer.Run(); err != nil {
+			c <- fmt.Errorf("grpc server run failed: %w", err)
+		}
+	}(errChan)
+
+	return <-errChan
 }

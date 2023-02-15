@@ -27,6 +27,8 @@ type Config struct {
 
 	MONGO_DB_HOST string `mapstructure:"MONGO_DB_HOST"`
 	MONGO_DB_NAME string `mapstructure:"MONGO_DB_NAME"`
+
+	GRPC_HOST string `mapstructure:"GRPC_HOST"`
 }
 
 func New() (*Config, error) {
