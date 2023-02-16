@@ -6,7 +6,11 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
+)
+
+const (
+	User   = "user"
+	Driver = "driver"
 )
 
 var (
@@ -22,31 +26,25 @@ type Token struct {
 }
 
 type TokenParams struct {
-	UserID   uint64
-	DriverID uuid.UUID
-	Type     string
+	ID   any
+	Type string
 }
 
 func NewToken(params TokenParams, cfg *config.Config) (*Token, error) {
-	var id any
-	if params.Type == "user" {
-		id = params.UserID
-	} else if params.Type == "driver" {
-		id = params.DriverID
-	} else {
+	if params.Type != User && params.Type != Driver {
 		return nil, ErrUnknownType
 	}
 
 	accessExp := time.Now().Add(time.Duration(cfg.ACCESS_TOKEN_EXP) * time.Minute)
 
-	access, err := newJwt(accessExp, id, params.Type, cfg)
+	access, err := newJwt(accessExp, params.ID, params.Type, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new jwt failed: %w", err)
 	}
 
 	rtExp := time.Now().Add(time.Duration(cfg.REFRESH_TOKEN_EXP) * 24 * time.Hour)
 
-	rt, err := newJwt(rtExp, id, params.Type, cfg)
+	rt, err := newJwt(rtExp, params.ID, params.Type, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("new rt failed: %w", err)
 	}
@@ -90,6 +88,9 @@ func Verify(token string, cfg *config.Config) (uint64, error) {
 
 	if !claims.VerifyExpiresAt(time.Now().UTC().Unix(), true) {
 		return 0, ErrTokenExpired
+	}
+	if string(claims["type"].(string)) != User {
+		return 0, ErrUnknownType
 	}
 	return uint64(claims["user_id"].(float64)), nil
 }
