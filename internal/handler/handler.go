@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -26,10 +24,10 @@ func New(s *service.Service, cfg *config.Config, log *zap.Logger) *Handler {
 func (h *Handler) InitRouters() *gin.Engine {
 	router := gin.New()
 
-	fmt.Println(swaggerFiles.Handler)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	users := router.Group("/users")
+	users.Use(h.Log())
 
 	auth := users.Group("/auth")
 	auth.POST("sing-up", h.SingUp)
