@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "internal/service";
+option go_package = "pkg/proto";
 
 message Params{
     uint64 UserID  = 1;

@@ -1,4 +1,4 @@
-package grpc_server
+package grpc
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
+	"github.com/RipperAcskt/innotaxi/pkg/proto"
 	"google.golang.org/grpc"
 )
 
@@ -28,13 +29,13 @@ func (s *Server) Run() error {
 	opts := []grpc.ServerOption{}
 	grpcServer := grpc.NewServer(opts...)
 
-	service.RegisterAuthServiceServer(grpcServer, s)
+	proto.RegisterAuthServiceServer(grpcServer, s)
 	grpcServer.Serve(listener)
 
 	return nil
 }
 
-func (s *Server) GetJWT(c context.Context, params *service.Params) (*service.Response, error) {
+func (s *Server) GetJWT(c context.Context, params *proto.Params) (*proto.Response, error) {
 	tokenParams := service.TokenParams{
 		DriverID: params.DriverID,
 		Type:     params.Type,
@@ -45,7 +46,7 @@ func (s *Server) GetJWT(c context.Context, params *service.Params) (*service.Res
 		return nil, fmt.Errorf("new token failed: %w", err)
 	}
 
-	response := &service.Response{
+	response := &proto.Response{
 		AccessToken:  token.Access,
 		RefreshToken: token.RT,
 	}

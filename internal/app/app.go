@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/RipperAcskt/innotaxi/config"
-	grpc "github.com/RipperAcskt/innotaxi/internal/grpc"
-	"github.com/RipperAcskt/innotaxi/internal/handler"
+	"github.com/RipperAcskt/innotaxi/internal/handler/grpc"
+	handler "github.com/RipperAcskt/innotaxi/internal/handler/restapi"
 	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
