@@ -8,15 +8,19 @@ import (
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/service"
 	"github.com/RipperAcskt/innotaxi/pkg/proto"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 type Server struct {
-	cfg *config.Config
+	listener   net.Listener
+	grpcServer *grpc.Server
+	log        *zap.Logger
+	cfg        *config.Config
 }
 
-func New(cfg *config.Config) *Server {
-	return &Server{cfg}
+func New(log *zap.Logger, cfg *config.Config) *Server {
+	return &Server{nil, nil, log, cfg}
 }
 
 func (s *Server) Run() error {
@@ -28,6 +32,9 @@ func (s *Server) Run() error {
 
 	opts := []grpc.ServerOption{}
 	grpcServer := grpc.NewServer(opts...)
+
+	s.listener = listener
+	s.grpcServer = grpcServer
 
 	proto.RegisterAuthServiceServer(grpcServer, s)
 	grpcServer.Serve(listener)
@@ -51,4 +58,17 @@ func (s *Server) GetJWT(c context.Context, params *proto.Params) (*proto.Respons
 		RefreshToken: token.RT,
 	}
 	return response, nil
+}
+
+func (s *Server) Stop() error {
+	s.log.Info("Shuttig down grpc...")
+
+	err := s.listener.Close()
+	if err != nil {
+		return fmt.Errorf("listener close failed: %w", err)
+	}
+
+	s.grpcServer.Stop()
+	s.log.Info("Grpc server exiting.")
+	return nil
 }

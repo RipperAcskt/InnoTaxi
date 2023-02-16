@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/RipperAcskt/innotaxi/config"
@@ -63,21 +64,28 @@ func Run() error {
 
 	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg, log)
-	server := new(server.Server)
+	server := &server.Server{
+		Log: log,
+	}
 
-	errChan := make(chan error)
-	go func(c chan error) {
-		if err := server.Run(handler.InitRouters(), cfg); err != nil {
-			c <- fmt.Errorf("server run failed: %w", err)
+	go func() {
+		if err := server.Run(handler.InitRouters(), cfg); err != nil && err != http.ErrServerClosed {
+			log.Fatal(fmt.Sprintf("server run failed: %v", err))
 		}
-	}(errChan)
+	}()
 
-	grpcServer := grpc.New(cfg)
-	go func(c chan error) {
+	grpcServer := grpc.New(log, cfg)
+	go func() {
 		if err := grpcServer.Run(); err != nil {
-			c <- fmt.Errorf("grpc server run failed: %w", err)
+			log.Fatal(fmt.Sprintf("grpc server run failed: %v", err))
 		}
-	}(errChan)
+	}()
 
-	return <-errChan
+	if err := server.ShutDown(); err != nil {
+		log.Fatal(fmt.Sprintf("server shut down failed: %v", err))
+	}
+	if err := grpcServer.Stop(); err != nil {
+		log.Fatal(fmt.Sprintf("grpc server stop failed: %v", err))
+	}
+	return nil
 }
