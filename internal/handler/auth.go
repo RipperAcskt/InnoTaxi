@@ -190,7 +190,12 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	token, err := service.NewToken(id, h.Cfg)
+	params := service.TokenParams{
+		ID:   id,
+		Type: "user",
+	}
+
+	token, err := service.NewToken(params, h.Cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrUnknownType) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
