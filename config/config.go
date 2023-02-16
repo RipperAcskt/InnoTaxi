@@ -25,8 +25,9 @@ type Config struct {
 	REDIS_DB_PASSWORD string `mapstructure:"REDIS_DB_PASSWORD"`
 	REDIS_DB_NAME     int    `mapstructure:"REDIS_DB_NAME"`
 
-	MONGO_DB_HOST string `mapstructure:"MONGO_DB_HOST"`
-	MONGO_DB_NAME string `mapstructure:"MONGO_DB_NAME"`
+	MONGO_DB_HOST     string `mapstructure:"MONGO_DB_HOST"`
+	MONGO_DB_USERNAME string `mapstructure:"MONGO_DB_USERNAME"`
+	MONGO_DB_PASSWORD string `mapstructure:"MONGO_DB_PASSWORD"`
 
 	GRPC_HOST string `mapstructure:"GRPC_HOST"`
 }
@@ -56,5 +57,5 @@ func (c *Config) GetPostgresUrl() string {
 }
 
 func (c *Config) GetMongoUrl() string {
-	return fmt.Sprintf("mongodb://%s", c.MONGO_DB_HOST)
+	return fmt.Sprintf("mongodb://%s:%s@%s/test", c.MONGO_DB_USERNAME, c.MONGO_DB_PASSWORD, c.MONGO_DB_HOST)
 }
