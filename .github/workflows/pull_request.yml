@@ -1,14 +1,16 @@
 name: pull request into brunches
 on: [pull_request]
 jobs:
-    steps:
-      - uses: actions/checkout@v3
+    checks:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v3
 
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.19
-      - run: go test ./internal/service 
+          - uses: actions/setup-go@v3
+            with:
+              go-version: 1.19
+          - run: go test ./internal/service 
 
-      - uses: golangci/golangci-lint-action@v3
+          - uses: golangci/golangci-lint-action@v3
 
-      - run: go build -v -o ./bin/main ./cmd/main.go
+          - run: go build -v -o ./bin/main ./cmd/main.go
