@@ -89,7 +89,7 @@ func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, erro
 
 	params := TokenParams{
 		ID:   userDB.ID,
-		Type: "user",
+		Type: User,
 	}
 
 	token, err := NewToken(params, s.cfg)

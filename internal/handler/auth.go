@@ -192,7 +192,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 
 	params := service.TokenParams{
 		ID:   id,
-		Type: "user",
+		Type: service.User,
 	}
 
 	token, err := service.NewToken(params, h.Cfg)
