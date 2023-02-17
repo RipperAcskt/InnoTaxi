@@ -10,15 +10,24 @@ services:
       - "5432:5432"
   redis:
     image: redis:latest
-    environment:
-      REDIS_PASSWORD: '150403va'
+    command: >
+          --requirepass 150403va
     ports:
       - "6379:6379"
+  mongo:
+    image: mongo:latest
+    environment:
+      - MONGO_INITDB_DATABASE=test
+      - MONGO_INITDB_ROOT_USERNAME=ripper
+      - MONGO_INITDB_ROOT_PASSWORD=150403va
+    ports:
+      - "27017:27017"
   inno-taxi-user:
     build: .
     ports:
-      - '8080:8080'
+      - "8080:8080"
     depends_on:
       - postgres
       - redis
+      - mongo
   
