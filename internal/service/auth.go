@@ -88,11 +88,14 @@ func (s *AuthService) SingIn(ctx context.Context, user UserSingIn) (*Token, erro
 	}
 
 	params := TokenParams{
-		ID:   userDB.ID,
-		Type: User,
+		ID:                userDB.ID,
+		Type:              User,
+		HS256_SECRET:      s.cfg.HS256_SECRET,
+		ACCESS_TOKEN_EXP:  s.cfg.ACCESS_TOKEN_EXP,
+		REFRESH_TOKEN_EXP: s.cfg.REFRESH_TOKEN_EXP,
 	}
 
-	token, err := NewToken(params, s.cfg)
+	token, err := NewToken(params)
 	if err != nil {
 		return nil, fmt.Errorf("new token failed: %w", err)
 	}

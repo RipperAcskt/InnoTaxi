@@ -26,25 +26,28 @@ type Token struct {
 }
 
 type TokenParams struct {
-	ID   any
-	Type string
+	ID                any
+	Type              string
+	HS256_SECRET      string
+	ACCESS_TOKEN_EXP  int
+	REFRESH_TOKEN_EXP int
 }
 
-func NewToken(params TokenParams, cfg *config.Config) (*Token, error) {
+func NewToken(params TokenParams) (*Token, error) {
 	if params.Type != User && params.Type != Driver {
 		return nil, ErrUnknownType
 	}
 
-	accessExp := time.Now().Add(time.Duration(cfg.ACCESS_TOKEN_EXP) * time.Minute)
+	accessExp := time.Now().Add(time.Duration(params.ACCESS_TOKEN_EXP) * time.Minute)
 
-	access, err := newJwt(accessExp, params.ID, params.Type, cfg)
+	access, err := newJwt(accessExp, params)
 	if err != nil {
 		return nil, fmt.Errorf("new jwt failed: %w", err)
 	}
 
-	rtExp := time.Now().Add(time.Duration(cfg.REFRESH_TOKEN_EXP) * 24 * time.Hour)
+	rtExp := time.Now().Add(time.Duration(params.REFRESH_TOKEN_EXP) * 24 * time.Hour)
 
-	rt, err := newJwt(rtExp, params.ID, params.Type, cfg)
+	rt, err := newJwt(rtExp, params)
 	if err != nil {
 		return nil, fmt.Errorf("new rt failed: %w", err)
 	}
@@ -52,15 +55,15 @@ func NewToken(params TokenParams, cfg *config.Config) (*Token, error) {
 	return &Token{access, rt, accessExp, rtExp}, nil
 }
 
-func newJwt(jwtExp time.Time, id any, t string, cfg *config.Config) (string, error) {
+func newJwt(jwtExp time.Time, p TokenParams) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	claims["user_id"] = id
-	claims["type"] = t
+	claims["user_id"] = p.ID
+	claims["type"] = p.Type
 	claims["exp"] = jwtExp.UTC().Unix()
 
-	secret := []byte(cfg.HS256_SECRET)
+	secret := []byte(p.HS256_SECRET)
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		return "", fmt.Errorf("signed string failed: %w", err)
