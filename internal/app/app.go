@@ -70,14 +70,16 @@ func Run() error {
 
 	go func() {
 		if err := server.Run(handler.InitRouters(), cfg); err != nil && err != http.ErrServerClosed {
-			log.Fatal(fmt.Sprintf("server run failed: %v", err))
+			log.Error(fmt.Sprintf("server run failed: %v", err))
+			return
 		}
 	}()
 
 	grpcServer := grpc.New(log, cfg)
 	go func() {
 		if err := grpcServer.Run(); err != nil {
-			log.Fatal(fmt.Sprintf("grpc server run failed: %v", err))
+			log.Error(fmt.Sprintf("grpc server run failed: %v", err))
+			return
 		}
 	}()
 
