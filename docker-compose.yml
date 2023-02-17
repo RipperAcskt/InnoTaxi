@@ -6,12 +6,16 @@ services:
       POSTGRES_DB: 'innotaxi'
       POSTGRES_USER: 'ripper'
       POSTGRES_PASSWORD: '150403'
+    volumes:
+      - .:/data/postgres
     ports:
       - "5432:5432"
   redis:
     image: redis:latest
     command: >
           --requirepass 150403va
+    volumes:
+      - .:/data/redis
     ports:
       - "6379:6379"
   mongo:
@@ -20,6 +24,8 @@ services:
       - MONGO_INITDB_DATABASE=test
       - MONGO_INITDB_ROOT_USERNAME=ripper
       - MONGO_INITDB_ROOT_PASSWORD=150403va
+    volumes:
+      - .:/data/mongo
     ports:
       - "27017:27017"
   inno-taxi-user:
@@ -30,4 +36,3 @@ services:
       - postgres
       - redis
       - mongo
-  
