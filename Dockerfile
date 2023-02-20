@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM golang:alpine AS builder
 
 WORKDIR /app
 
@@ -10,4 +10,12 @@ RUN go build -o ./bin/main ./cmd/main.go
 
 EXPOSE 8080
 
-CMD ["./bin/main"]
+FROM scratch
+
+WORKDIR /app
+
+COPY --from=builder /app/bin/main .
+
+COPY . .
+
+CMD ["./main"]
