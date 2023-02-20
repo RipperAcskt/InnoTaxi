@@ -1,128 +1,73 @@
 # InnoTaxiUser API 
 
-A user microservice for InnoTaxi app which provide possibility for working with user.
+This is a microservice for creating and managing taxi orders. The service is written in Go using the Gin web framework.
 
-`app.env` is a configuration for service.
+## Installation
 
-## Run the app
+To install and run the service, follow these steps:
 
-    go build -o ./bin/main ./cmd/main.go
-    ./bin/main
+Install Go on your system if you haven't already done so.
+Clone the repository to your local machine.
+Run the following command in the root directory of the project:
+
+    go run ./cmd/main.go
+
+Also you can run project using docker-compose.
+The service should now be running on localhost:8080.
+
 
 ## Run the tests
 
     go test ./internal/service 
 
-# REST API
+## Code Description
 
-The REST API for service.
+# Project structure
 
-## Get profile by provided user's id
+The code for the microservice is organized into several packages:
 
-### Request
+- cmd/main.go contains the main function for the service.
+- internal/app/app.go contains functions which sets up the API routes and starts the server.
+- models/ contains the data models for the application. In this case, there is only one model - User.
+- repositories/ contains the repository implementation for working with the databases. In service there are such databases as postgresql for store data, mongodb for logs and mongodb for cache.
+- services/ contains the business logic services for the application.
+- handlers/ contains the API request handlers for the application. Service provides handlers for registartion and auth user, also handlers for working with user's profile.
 
-`GET /users/profile/:id`
 
-    curl -i -H 'Accept: application/json' -H 'Authorization: Bearer ${access_token}' http://localhost:8080/users/profile/1
+The file user.go contains the User structure, which represents the user data model. In this case, the user contains the following fields:
 
-### Response
+    type User struct {
+        ID          uint64 
+        Name        string 
+        PhoneNumber string  
+        Email       string 
+        Raiting     float64
+        Status      string 
+    }
 
-    HTTP/1.1 200 OK
-    Content-Type: application/json; charset=utf-8
-    Date: Fri, 17 Feb 2023 08:04:01 GMT
-    Content-Length: 55
+The Status field is an enumeration of the UserStatus type, which determines the status of the user:
 
-    {"name":"2","phone_number":"2","email":"2","raiting":0}
+    const (
+	    StatusCreated string = "created"
+	    StatusDeleted string = "deleted"
+    )
 
-## Update profile by provided user's id
+Business logic services are located in the internal/services/ package. Service uses repository layer to get data, layer data implement such functions as: 
 
-### Request
+    type UserRepo interface {
+        GetUserById(ctx context.Context, id string) (*model.User, error)
+        UpdateUserById(ctx context.Context, id string, user *model.User) error
+        DeleteUserById(ctx context.Context, id string) error
+    } 
 
-`PUT /users/profile/:id`
+    type AuthRepo interface {
+	    CreateUser(ctx context.Context, user UserSingUp) error
+	    CheckUserByPhoneNumber(ctx context.Context, phone string) (*UserSingIn, error)
+    }
 
-    curl -i -H 'Accept: application/json' -H 'Authorization: Bearer ${access_token}' -H 'Content-Type: application/json' -d "{\"phone_number\": \"+77777778\",\"email\": \"ripper@mail.ru\"}" -X PUT http://localhost:8080/users/profile/1
+    type TokenRepo interface {
+	    AddToken(token string, expired time.Duration) error
+	    GetToken(token string) bool
+    }
 
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Fri, 17 Feb 2023 08:16:11 GMT
-    Content-Length: 0
-
-## Selete profile by provided user's id
-
-### Request
-
-`DELETE /users/:id`
-
-    curl -i -H 'Accept: application/json' -H 'Authorization: Bearer ${access_token}' -XDELETE http://localhost:8080/users/1
-
-### Response
-
-    HTTP/1.1 200 OK
-    Date: Fri, 17 Feb 2023 08:20:07 GMT
-    Content-Length: 0
-
-## Create account
-
-### Request
-
-`POST /users/auth/sing-up`
-
-    curl -i -H 'Accept: application/json' -H 'Content-Type: application/json' -d "{\"name\": \"2\",\"phone_number\": \"2\",\"email\": \"2\",\"password\": \"2\"}" -X POST http://localhost:8080/users/auth/sing-up
-
-### Response
-
-    HTTP/1.1 201 Created
-    Date: Fri, 17 Feb 2023 08:26:40 GMT
-    Content-Length: 0
-
-## Sing in into accout
-
-### Request
-
-`POST /users/auth/sing-in`
-
-    curl -i -H 'Accept: application/json' -H 'Content-Type: application/json' -d "{\"phone_number\": \"2\",\"password\": \"2\"}" -X POST http://localhost:8080/users/auth/sing-in
-
-### Response
-
-    HTTP/1.1 200 OK
-    Content-Type: application/json; charset=utf-8
-    Set-Cookie: refresh_token=${refresh_token}; Path=/users/auth; Max-Age=2592000; HttpOnly
-    Date: Fri, 17 Feb 2023 08:29:26 GMT
-    Content-Length: 159
-
-    {"access_token":${access_token}}
-
-## Update access token
-
-### Request
-
-`GET /users/auth/refresh`
-
-    curl -i -H 'Accept: application/json' -H 'Authorization: Bearer ${access_token}' --cookie "refresh_token=${refresh_token}" -X GET http://localhost:8080/users/auth/refresh
-
-### Response
-
-    HTTP/1.1 200 OK
-    Content-Type: application/json; charset=utf-8
-    Set-Cookie: refresh_token=${refresh_token}; Path=/users/auth; Max-Age=2592000; HttpOnly
-    Date: Fri, 17 Feb 2023 08:33:56 GMT
-    Content-Length: 159
-
-    {"access_token":${access_token}}
-
-## Logout from account
-
-### Request
-
-`GET /users/auth/logout`
-
-    curl -i -H 'Accept: application/json' -H 'Authorization: Bearer ${access_token}' --cookie "refresh_token=${refresh_token}" -X GET http://localhost:8080/users/auth/logout
-
-### Response
-
-    HTTP/1.1 200 OK
-    Set-Cookie: refresh_token=; Path=/users/auth; Max-Age=6; HttpOnly
-    Date: Fri, 17 Feb 2023 08:37:06 GMT
-    Content-Length: 0
+This microservice demonstrates a simple way to create and manage taxi orders using Go and Gin. The code is organized into packages, making it easy to maintain and extend. The `UserService` and `UserHandler` objects provide the business logic and API endpoints, respectively.
