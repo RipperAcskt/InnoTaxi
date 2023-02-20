@@ -57,7 +57,12 @@ func Run() error {
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
 	)
 	log := zap.New(core, zap.AddCaller())
-	defer log.Sync()
+	defer func() {
+		err := log.Sync()
+		if err != nil {
+			log.Fatal("log sync failed: %w", zap.Error(err))
+		}
+	}()
 
 	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg, log)
