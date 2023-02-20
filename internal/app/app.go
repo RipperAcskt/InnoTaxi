@@ -60,8 +60,12 @@ func Run() error {
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
 	)
 	log := zap.New(core, zap.AddCaller())
-	defer log.Sync()
-
+	defer func() {
+		err := log.Sync()
+		if err != nil {
+			log.Fatal("log sync failed", zap.Error(err))
+		}
+	}()
 	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg, log)
 	server := &server.Server{
@@ -70,14 +74,16 @@ func Run() error {
 
 	go func() {
 		if err := server.Run(handler.InitRouters(), cfg); err != nil && err != http.ErrServerClosed {
-			log.Fatal(fmt.Sprintf("server run failed: %v", err))
+			log.Error(fmt.Sprintf("server run failed: %v", err))
+			return
 		}
 	}()
 
 	grpcServer := grpc.New(log, cfg)
 	go func() {
 		if err := grpcServer.Run(); err != nil {
-			log.Fatal(fmt.Sprintf("grpc server run failed: %v", err))
+			log.Error(fmt.Sprintf("grpc server run failed: %v", err))
+			return
 		}
 	}()
 
