@@ -276,7 +276,7 @@ func TestVerify(t *testing.T) {
 		},
 		{
 			name:   "verify token ok",
-			token:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzY4Nzk5NDIsInR5cGUiOiJ1c2VyIiwidXNlcl9pZCI6MX0.qwiL4bupjm9O-ZnKpIcB8-erQytBJgkWlxnwPmRmv-c",
+			token:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk0NzAxNTQsInR5cGUiOiJ1c2VyIiwidXNlcl9pZCI6MX0.r5vZu9eOds5kti9UjQFXx8AYLHZC23YLtVVnr8dgx24",
 			userId: 1,
 			err:    nil,
 		},
