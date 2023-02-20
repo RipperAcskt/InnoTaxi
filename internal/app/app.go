@@ -60,7 +60,7 @@ func Run() error {
 	defer func() {
 		err := log.Sync()
 		if err != nil {
-			log.Fatal("log sync failed: %w", zap.Error(err))
+			log.Error("log sync failed: %w", zap.Error(err))
 		}
 	}()
 
