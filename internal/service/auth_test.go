@@ -271,7 +271,7 @@ func TestVerify(t *testing.T) {
 		{
 			name:   "verify token expired",
 			token:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzY4Nzk5NDIsInR5cGUiOiJ1c2VyIiwidXNlcl9pZCI6MX0.qwiL4bupjm9O-ZnKpIcB8-erQytBJgkWlxnwPmRmv-c",
-			userId: 1,
+			userId: 0,
 			err:    service.ErrTokenExpired,
 		},
 		{
