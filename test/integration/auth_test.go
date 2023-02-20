@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -248,7 +249,10 @@ func TestLogout(t *testing.T) {
 				assert.Equal(t, http.StatusOK, w.Code)
 
 				token := make(map[string]string)
-				json.Unmarshal(w.Body.Bytes(), &token)
+				err := json.Unmarshal(w.Body.Bytes(), &token)
+				if err != nil {
+					log.Fatalf("json unmarshall failed: %v", err)
+				}
 
 				return token["access_token"]
 			},
