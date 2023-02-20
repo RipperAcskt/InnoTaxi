@@ -33,41 +33,14 @@ The code for the microservice is organized into several packages:
 - services/ contains the business logic services for the application.
 - handlers/ contains the API request handlers for the application. Service provides handlers for registartion and auth user, also handlers for working with user's profile.
 
+---
 
-The file user.go contains the User structure, which represents the user data model. In this case, the user contains the following fields:
+- The file user.go contains the User structure, which represents the user data model.
 
-    type User struct {
-        ID          uint64 
-        Name        string 
-        PhoneNumber string  
-        Email       string 
-        Raiting     float64
-        Status      string 
-    }
+- The Status field is an enumeration of the UserStatus type, which determines the status of the user.
 
-The Status field is an enumeration of the UserStatus type, which determines the status of the user:
+- Business logic services are located in the internal/services/ package. Service uses repository layer to get data.
 
-    const (
-	    StatusCreated string = "created"
-	    StatusDeleted string = "deleted"
-    )
-
-Business logic services are located in the internal/services/ package. Service uses repository layer to get data, layer data implement such functions as: 
-
-    type UserRepo interface {
-        GetUserById(ctx context.Context, id string) (*model.User, error)
-        UpdateUserById(ctx context.Context, id string, user *model.User) error
-        DeleteUserById(ctx context.Context, id string) error
-    } 
-
-    type AuthRepo interface {
-	    CreateUser(ctx context.Context, user UserSingUp) error
-	    CheckUserByPhoneNumber(ctx context.Context, phone string) (*UserSingIn, error)
-    }
-
-    type TokenRepo interface {
-	    AddToken(token string, expired time.Duration) error
-	    GetToken(token string) bool
-    }
+### Conclusion
 
 This microservice demonstrates a simple way to create and manage taxi orders using Go and Gin. The code is organized into packages, making it easy to maintain and extend. The `UserService` and `UserHandler` objects provide the business logic and API endpoints, respectively.
