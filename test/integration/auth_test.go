@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/RipperAcskt/innotaxi/config"
-	"github.com/RipperAcskt/innotaxi/internal/handler"
+	handler "github.com/RipperAcskt/innotaxi/internal/handler/restapi"
 	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"

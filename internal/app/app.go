@@ -2,15 +2,18 @@ package app
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/RipperAcskt/innotaxi/config"
-	"github.com/RipperAcskt/innotaxi/internal/handler"
+	"github.com/RipperAcskt/innotaxi/internal/handler/grpc"
+	handler "github.com/RipperAcskt/innotaxi/internal/handler/restapi"
 	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
 	"github.com/RipperAcskt/innotaxi/internal/server"
 	"github.com/RipperAcskt/innotaxi/internal/service"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -66,9 +69,30 @@ func Run() error {
 
 	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg, log)
-	server := new(server.Server)
-	if err := server.Run(handler.InitRouters(), cfg); err != nil {
-		return fmt.Errorf("server run failed: %w", err)
+	server := &server.Server{
+		Log: log,
+	}
+
+	go func() {
+		if err := server.Run(handler.InitRouters(), cfg); err != nil && err != http.ErrServerClosed {
+			log.Error(fmt.Sprintf("server run failed: %v", err))
+			return
+		}
+	}()
+
+	grpcServer := grpc.New(log, cfg)
+	go func() {
+		if err := grpcServer.Run(); err != nil {
+			log.Error(fmt.Sprintf("grpc server run failed: %v", err))
+			return
+		}
+	}()
+
+	if err := server.ShutDown(); err != nil {
+		return fmt.Errorf("server shut down failed: %w", err)
+	}
+	if err := grpcServer.Stop(); err != nil {
+		return fmt.Errorf("grpc server stop failed: %v", err)
 	}
 	return nil
 }
