@@ -39,7 +39,7 @@ func (s *Server) Run() error {
 	proto.RegisterAuthServiceServer(grpcServer, s)
 	err = grpcServer.Serve(listener)
 	if err != nil {
-		return fmt.Errorf("server failed: %w", err)
+		return fmt.Errorf("serve failed: %w", err)
 	}
 
 	return nil

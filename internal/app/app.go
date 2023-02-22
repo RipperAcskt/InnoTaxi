@@ -89,10 +89,10 @@ func Run() error {
 	}()
 
 	if err := server.ShutDown(); err != nil {
-		log.Fatal(fmt.Sprintf("server shut down failed: %v", err))
+		return fmt.Errorf("server shut down failed: %w", err)
 	}
 	if err := grpcServer.Stop(); err != nil {
-		log.Fatal(fmt.Sprintf("grpc server stop failed: %v", err))
+		return fmt.Errorf("grpc server stop failed: %v", err)
 	}
 	return nil
 }
