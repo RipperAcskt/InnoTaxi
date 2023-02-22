@@ -28,6 +28,8 @@ type Config struct {
 	MONGO_DB_HOST     string `mapstructure:"MONGO_DB_HOST"`
 	MONGO_DB_USERNAME string `mapstructure:"MONGO_DB_USERNAME"`
 	MONGO_DB_PASSWORD string `mapstructure:"MONGO_DB_PASSWORD"`
+
+	GRPC_HOST string `mapstructure:"GRPC_HOST"`
 }
 
 func New() (*Config, error) {

@@ -26,13 +26,14 @@ func (h *Handler) SingUp(c *gin.Context) {
 	logger := getLogger(c)
 
 	var user service.UserSingUp
-	if err := c.BindJSON(&user); err != nil {
 
+	if err := c.BindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
+
 	err := h.s.SingUp(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserAlreadyExists) {
@@ -67,6 +68,7 @@ func (h *Handler) SingIn(c *gin.Context) {
 	var user service.UserSingIn
 
 	if err := c.BindJSON(&user); err != nil {
+
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -75,6 +77,7 @@ func (h *Handler) SingIn(c *gin.Context) {
 	token, err := h.s.SingIn(c.Request.Context(), user)
 	if err != nil {
 		if errors.Is(err, service.ErrUserDoesNotExists) || errors.Is(err, service.ErrIncorrectPassword) {
+
 			c.JSON(http.StatusForbidden, gin.H{
 				"error": err.Error(),
 			})
@@ -96,6 +99,8 @@ func (h *Handler) SingIn(c *gin.Context) {
 
 func (h *Handler) VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		logger := getLogger(c)
+
 		token := strings.Split(c.GetHeader("Authorization"), " ")
 		if len(token) < 2 {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -120,6 +125,7 @@ func (h *Handler) VerifyToken() gin.HandlerFunc {
 				return
 			}
 
+			logger.Error("service verify failed", zap.Error(err))
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Errorf("verify failed: %w", err).Error(),
 			})
@@ -155,6 +161,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 	refresh, err := c.Cookie("refresh_token")
 	if err != nil {
 		if err == http.ErrNoCookie {
+
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": fmt.Errorf("bad refresh token").Error(),
 			})
@@ -170,6 +177,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 	id, err := service.Verify(refresh, h.Cfg)
 	if err != nil {
 		if errors.Is(err, service.ErrTokenExpired) {
+
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": err.Error(),
 			})
@@ -234,6 +242,7 @@ func (h *Handler) Logout(c *gin.Context) {
 
 	id, ok := c.Get("id")
 	if !ok {
+
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "can't get id",
 		})
@@ -243,6 +252,7 @@ func (h *Handler) Logout(c *gin.Context) {
 	exp := time.Duration(h.Cfg.ACCESS_TOKEN_EXP) * time.Minute
 	token := strings.Split(c.GetHeader("Authorization"), " ")
 	if len(token) < 2 {
+
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": fmt.Errorf("access token required").Error(),
 		})
