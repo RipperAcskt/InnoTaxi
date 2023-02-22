@@ -47,11 +47,14 @@ func (s *Server) Run() error {
 
 func (s *Server) GetJWT(c context.Context, params *proto.Params) (*proto.Response, error) {
 	tokenParams := service.TokenParams{
-		DriverID: params.DriverID,
-		Type:     params.Type,
+		ID:                params.DriverID,
+		Type:              params.Type,
+		HS256_SECRET:      s.cfg.HS256_SECRET,
+		ACCESS_TOKEN_EXP:  s.cfg.ACCESS_TOKEN_EXP,
+		REFRESH_TOKEN_EXP: s.cfg.REFRESH_TOKEN_EXP,
 	}
 
-	token, err := service.NewToken(tokenParams, s.cfg)
+	token, err := service.NewToken(tokenParams)
 	if err != nil {
 		return nil, fmt.Errorf("new token failed: %w", err)
 	}
