@@ -63,9 +63,10 @@ func Run() error {
 	defer func() {
 		err := log.Sync()
 		if err != nil {
-			log.Error("log sync failed", zap.Error(err))
+			log.Error("log sync failed: %w", zap.Error(err))
 		}
 	}()
+
 	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg, log)
 	server := &server.Server{
