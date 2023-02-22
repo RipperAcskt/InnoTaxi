@@ -190,8 +190,22 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	token, err := service.NewToken(id, h.Cfg)
+	params := service.TokenParams{
+		ID:                id,
+		Type:              service.User,
+		HS256_SECRET:      h.Cfg.HS256_SECRET,
+		ACCESS_TOKEN_EXP:  h.Cfg.ACCESS_TOKEN_EXP,
+		REFRESH_TOKEN_EXP: h.Cfg.REFRESH_TOKEN_EXP,
+	}
+
+	token, err := service.NewToken(params)
 	if err != nil {
+		if errors.Is(err, service.ErrUnknownType) {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+		}
+
 		logger.Error("/users/auth/refresh", zap.Error(fmt.Errorf("new token failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

@@ -269,16 +269,16 @@ func TestVerify(t *testing.T) {
 		err    error
 	}{
 		{
-			name:   "verify token",
-			token:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzU3MDA3MTAsInVzZXJfaWQiOjEwfQ.rJyQUShCMxXqoRhC6zOMMXZY5gjOcvw4QFUiaQUHIHg",
+			name:   "verify token expired",
+			token:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzY4Nzk5NDIsInR5cGUiOiJ1c2VyIiwidXNlcl9pZCI6MX0.qwiL4bupjm9O-ZnKpIcB8-erQytBJgkWlxnwPmRmv-c",
 			userId: 0,
 			err:    service.ErrTokenExpired,
 		},
 		{
-			name:   "verify token",
-			token:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzgzNjUyNzIsInVzZXJfaWQiOjEwfQ.zshru5rbQPe5UXAIMVbHuSiWf63t43oYOERC48lkuoE",
-			userId: 10,
-			err:    service.ErrTokenExpired,
+			name:   "verify token ok",
+			token:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzk0NzAxNTQsInR5cGUiOiJ1c2VyIiwidXNlcl9pZCI6MX0.r5vZu9eOds5kti9UjQFXx8AYLHZC23YLtVVnr8dgx24",
+			userId: 1,
+			err:    nil,
 		},
 	}
 
