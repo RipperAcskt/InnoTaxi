@@ -6,8 +6,7 @@ import (
 	"os"
 
 	"github.com/RipperAcskt/innotaxi/config"
-	"github.com/RipperAcskt/innotaxi/internal/handler/grpc"
-	handler "github.com/RipperAcskt/innotaxi/internal/handler/restapi"
+	"github.com/RipperAcskt/innotaxi/internal/handler"
 	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
@@ -80,19 +79,8 @@ func Run() error {
 		}
 	}()
 
-	grpcServer := grpc.New(log, cfg)
-	go func() {
-		if err := grpcServer.Run(); err != nil {
-			log.Error(fmt.Sprintf("grpc server run failed: %v", err))
-			return
-		}
-	}()
-
 	if err := server.ShutDown(); err != nil {
 		return fmt.Errorf("server shut down failed: %w", err)
-	}
-	if err := grpcServer.Stop(); err != nil {
-		return fmt.Errorf("grpc server stop failed: %v", err)
 	}
 	return nil
 }
