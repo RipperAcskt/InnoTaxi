@@ -55,5 +55,5 @@ func (c *Config) GetPostgresUrl() string {
 }
 
 func (c *Config) GetMongoUrl() string {
-	return fmt.Sprintf("mongodb://%s:%s@%s/test?authSource=admin", c.MONGO_DB_USERNAME, c.MONGO_DB_PASSWORD, c.MONGO_DB_HOST)
+	return fmt.Sprintf("mongodb://%s:%s@%s/test", c.MONGO_DB_USERNAME, c.MONGO_DB_PASSWORD, c.MONGO_DB_HOST)
 }

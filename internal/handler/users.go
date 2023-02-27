@@ -72,6 +72,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
+			return
 		}
 		logger.Error("/users/profile/{id}", zap.Error(fmt.Errorf("update profile failed: %w", err)))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{

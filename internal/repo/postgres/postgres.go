@@ -130,7 +130,7 @@ func (p *Postgres) UpdateUserById(ctx context.Context, id string, user *model.Us
 		transfer.Email = &user.Email
 	}
 
-	res, err := p.DB.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", transfer.Name, transfer.PhoneNumber, transfer.Email, user.ID)
+	res, err := p.DB.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", transfer.Name, transfer.PhoneNumber, transfer.Email, id)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}
