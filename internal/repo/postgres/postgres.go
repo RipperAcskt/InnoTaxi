@@ -22,6 +22,12 @@ type Postgres struct {
 	cfg     *config.Config
 }
 
+type transferUser struct {
+	Name        *string
+	PhoneNumber *string
+	Email       *string
+}
+
 func New(cfg *config.Config) (*Postgres, error) {
 	DB, err := sql.Open("pgx", cfg.GetPostgresUrl())
 	if err != nil {
@@ -113,7 +119,18 @@ func (p *Postgres) UpdateUserById(ctx context.Context, id string, user *model.Us
 	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	res, err := p.DB.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4 AND status = $5", user.Name, user.PhoneNumber, user.Email, id, model.StatusCreated)
+	var transfer transferUser
+	if user.Name != "" {
+		transfer.Name = &user.Name
+	}
+	if user.PhoneNumber != "" {
+		transfer.PhoneNumber = &user.PhoneNumber
+	}
+	if user.Email != "" {
+		transfer.Email = &user.Email
+	}
+
+	res, err := p.DB.ExecContext(queryCtx, "UPDATE users SET name = COALESCE($1, name), phone_number = COALESCE($2, phone_number), email = COALESCE($3, email) WHERE id = $4", transfer.Name, transfer.PhoneNumber, transfer.Email, id)
 	if err != nil {
 		return fmt.Errorf("exec context failed: %w", err)
 	}

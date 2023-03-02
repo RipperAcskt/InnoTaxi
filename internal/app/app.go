@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/RipperAcskt/innotaxi/config"
+	"github.com/RipperAcskt/innotaxi/internal/handler"
 	"github.com/RipperAcskt/innotaxi/internal/handler/grpc"
-	handler "github.com/RipperAcskt/innotaxi/internal/handler/restapi"
 	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
@@ -63,9 +63,10 @@ func Run() error {
 	defer func() {
 		err := log.Sync()
 		if err != nil {
-			log.Fatal("log sync failed", zap.Error(err))
+			log.Error("log sync failed: %w", zap.Error(err))
 		}
 	}()
+
 	service := service.New(postgres, redis, cfg.SALT, cfg)
 	handler := handler.New(service, cfg, log)
 	server := &server.Server{
@@ -88,10 +89,7 @@ func Run() error {
 	}()
 
 	if err := server.ShutDown(); err != nil {
-		log.Fatal(fmt.Sprintf("server shut down failed: %v", err))
-	}
-	if err := grpcServer.Stop(); err != nil {
-		log.Fatal(fmt.Sprintf("grpc server stop failed: %v", err))
+		return fmt.Errorf("server shut down failed: %w", err)
 	}
 	return nil
 }
