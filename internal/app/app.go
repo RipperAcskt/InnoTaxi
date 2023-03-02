@@ -7,6 +7,7 @@ import (
 
 	"github.com/RipperAcskt/innotaxi/config"
 	"github.com/RipperAcskt/innotaxi/internal/handler"
+	"github.com/RipperAcskt/innotaxi/internal/handler/grpc"
 	"github.com/RipperAcskt/innotaxi/internal/repo/mongo"
 	"github.com/RipperAcskt/innotaxi/internal/repo/postgres"
 	"github.com/RipperAcskt/innotaxi/internal/repo/redis"
@@ -75,6 +76,14 @@ func Run() error {
 	go func() {
 		if err := server.Run(handler.InitRouters(), cfg); err != nil && err != http.ErrServerClosed {
 			log.Error(fmt.Sprintf("server run failed: %v", err))
+			return
+		}
+	}()
+
+	grpcServer := grpc.New(log, cfg)
+	go func() {
+		if err := grpcServer.Run(); err != nil {
+			log.Error(fmt.Sprintf("grpc server run failed: %v", err))
 			return
 		}
 	}()
