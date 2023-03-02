@@ -17,5 +17,6 @@ COPY --from=builder /app/bin/main .
 COPY . .
 
 EXPOSE 8080
+EXPOSE 5300
 
 CMD ["./main"]

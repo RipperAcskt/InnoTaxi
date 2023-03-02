@@ -38,7 +38,8 @@ services:
   inno-taxi-user:
     build: .
     ports:
-      - "8080:8081"
+      - "8081:8081"
+      - "5300:5300"
     depends_on:
       postgres:
         condition: service_healthy
